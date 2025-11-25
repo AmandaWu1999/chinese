@@ -66,4 +66,237 @@
         body.style-hybrid .container { background-image: linear-gradient(#e1e1e1 1px, transparent 1px); background-size: 100% 1.5em; border-left: 5px double #ef5350; padding-left: 40px; }
         body.style-hybrid .word-card { font-family: 'Microsoft JhengHei', sans-serif; transform: rotate(-1deg); box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
 
-        body.style-chalk { --bg: #2B3A2E; --card: #344838; --primary: #D84315; --text: #EEE; --border: #EEE; --radius: 5px; --font: sans-serif; background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVp
+        body.style-chalk { --bg: #2B3A2E; --card: #344838; --primary: #D84315; --text: #EEE; --border: #EEE; --radius: 5px; --font: sans-serif; background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+CjxmaWx0ZXIgaWQ9Im4iPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSI1IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+CjxyZWN0IHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgZmlsbD0idHJhbnNwYXJlbnQiLz4KPC9zdmc+'); }
+        body.style-chalk .container { border: 8px solid #5D4037; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+        body.style-chalk .word-card { background: transparent; border: 2px dashed rgba(255,255,255,0.6); color: #fff; }
+        body.style-chalk input, body.style-chalk textarea { background: rgba(255,255,255,0.1); color: white; border-color: #777; }
+        
+        .hidden { display: none !important; }
+        .stamp { position: absolute; right: 20px; bottom: 20px; font-size: 40px; border: 3px solid #D32F2F; color: #D32F2F; padding: 15px; transform: rotate(-15deg); border-radius: 50%; opacity: 0.8; font-weight: bold; background: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="style-morandi">
+
+    <h1 id="page-title">🎧 華語聽力 V6</h1>
+
+    <div id="teacher-setup" class="container">
+        <h2 style="border-bottom: 2px solid var(--border); padding-bottom: 10px;">🎨 老師出題區 (Wordwall 風格)</h2>
+        
+        <label>1. 選擇主題風格 (即時預覽)</label>
+        <select id="input-style" onchange="previewStyle()">
+            <option value="style-morandi">1. 莫蘭迪 Morandi</option>
+            <option value="style-watercolor">2. 水彩暈染 Watercolor</option>
+            <option value="style-flat">3. 扁平插畫 Pop Art</option>
+            <option value="style-geometric">4. 幾何科技 Cyber</option>
+            <option value="style-scene">5. 咖啡木紋 Wood</option>
+            <option value="style-cute">6. 天空雲朵 Sky</option>
+            <option value="style-print">7. 復古雜點 Retro</option>
+            <option value="style-icon">8. 方格筆記 Grid</option>
+            <option value="style-hybrid">9. 橫線筆記 Notebook</option>
+            <option value="style-chalk">10. 教室黑板 Chalkboard</option>
+        </select>
+
+        <label>2. 作業標題</label>
+        <input type="text" id="input-title" placeholder="例如：第五課 聽力測驗">
+        
+        <label>3. 頁首圖片 (選填)</label>
+        <input type="text" id="input-img" placeholder="https://...">
+
+        <label>4. 輸入題目 (用 / 切割)</label>
+        <textarea id="input-sentences" placeholder="範例：&#10;今天/天氣/真/不錯/。&#10;我/想/喝/咖啡/。"></textarea>
+
+        <button class="btn" onclick="generateLink()">✨ 產生作業連結</button>
+
+        <div id="result-box" class="hidden" style="margin-top:20px; padding:15px; border:1px solid var(--border); background: rgba(255,255,255,0.5);">
+            <p>✅ 網址已生成：</p>
+            <textarea id="generated-link" style="height:60px; font-size:12px;" readonly></textarea>
+            <button class="btn" onclick="copyLink()">📋 複製</button>
+            <button class="btn" onclick="testPlay()">🎮 試玩</button>
+        </div>
+    </div>
+
+    <div id="student-login" class="container hidden" style="text-align:center;">
+        <img id="login-img" class="hidden" src="" style="max-height:150px; margin-bottom:15px; border-radius:var(--radius);">
+        <h2 id="login-title">準備開始</h2>
+        <input type="text" id="student-name" placeholder="請輸入名字" style="text-align:center; font-size:18px;">
+        <br>
+        <button class="btn" onclick="startQuiz()">🚀 開始挑戰</button>
+    </div>
+
+    <div id="game-area" class="container hidden">
+        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <span id="display-name"></span>
+            <span>第 <span id="current-q">1</span> / <span id="total-q">1</span> 題</span>
+        </div>
+        <hr style="border-top: 1px solid var(--border); margin: 15px 0;">
+        <img id="game-header-img" class="hidden" src="" style="max-height:120px; display:block; margin:0 auto;">
+        
+        <div style="text-align:center; margin: 20px 0;">
+            <button class="btn" onclick="playAudio(1)">🔊 播放</button>
+            <button class="btn" style="opacity:0.8; font-size:14px;" onclick="playAudio(0.7)">🐢 慢速</button>
+        </div>
+
+        <div class="word-container" id="sortable-list"></div>
+        <div id="feedback" style="text-align:center; font-weight:bold; height:30px; margin:10px;"></div>
+
+        <div style="text-align:center;">
+            <button class="btn" onclick="checkAnswer()">✅ 檢查</button>
+            <button id="next-btn" class="btn hidden" onclick="nextQuestion()">👉 下一題</button>
+        </div>
+    </div>
+
+    <div id="result-area" class="container hidden" style="text-align:center;">
+        <h2>🏆 學習成果</h2>
+        <h3 id="result-title-display"></h3>
+        <p>姓名：<strong id="result-name" style="font-size:24px;"></strong></p>
+        <div style="font-size:60px; font-weight:bold; color:var(--primary); margin:20px;">
+            <span id="final-score">100</span> <span style="font-size:20px;">分</span>
+        </div>
+        <p>日期：<span id="finish-date"></span></p>
+        <div class="stamp">Excellent!</div>
+        <p style="color:var(--primary); font-size:14px;">(請截圖回傳)</p>
+    </div>
+
+    <script>
+        let questions = [], currentIdx = 0, score = 0, studentName = "";
+        let settings = { title: "聽力練習", style: "style-morandi", img: "" };
+        let sortableInstance = null;
+
+        function previewStyle() { document.body.className = document.getElementById('input-style').value; }
+
+        function generateLink() {
+            const raw = document.getElementById('input-sentences').value.trim();
+            if(!raw) return alert("請輸入題目");
+            
+            const qList = raw.split('\n').filter(l=>l.trim()).map(l => {
+                const chunks = l.split('/').map(w=>w.trim()).filter(w=>w);
+                return chunks.length ? { full: chunks.join(""), words: chunks } : null;
+            }).filter(x=>x);
+
+            const pack = {
+                s: {
+                    title: document.getElementById('input-title').value.trim() || "聽力練習",
+                    style: document.getElementById('input-style').value,
+                    img: document.getElementById('input-img').value.trim()
+                },
+                q: qList
+            };
+            
+            if (typeof LZString === 'undefined') return alert("系統載入中...");
+            const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(pack));
+            const url = `${window.location.href.split('?')[0]}?data=${compressed}`;
+            
+            document.getElementById('result-box').classList.remove('hidden');
+            document.getElementById('generated-link').value = url;
+        }
+
+        function copyLink() {
+            document.getElementById('generated-link').select();
+            document.execCommand('copy');
+            alert("已複製");
+        }
+        function testPlay() { window.location.href = document.getElementById('generated-link').value; }
+
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const data = params.get('data');
+            
+            if(data) {
+                try {
+                    const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(data));
+                    questions = decoded.q;
+                    if(decoded.s) settings = decoded.s;
+                    enterStudentMode();
+                } catch(e) { console.error(e); }
+            } else {
+                document.getElementById('teacher-setup').classList.remove('hidden');
+                previewStyle();
+            }
+        }
+
+        function enterStudentMode() {
+            document.getElementById('teacher-setup').classList.add('hidden');
+            document.getElementById('student-login').classList.remove('hidden');
+            document.body.className = settings.style;
+            document.getElementById('page-title').innerText = settings.title;
+            document.getElementById('login-title').innerText = settings.title;
+            if(settings.img) {
+                document.getElementById('login-img').src = settings.img;
+                document.getElementById('login-img').classList.remove('hidden');
+                document.getElementById('game-header-img').src = settings.img;
+            }
+        }
+
+        function startQuiz() {
+            const n = document.getElementById('student-name').value.trim();
+            if(!n) return alert("請輸入名字");
+            studentName = n;
+            document.getElementById('student-login').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            document.getElementById('display-name').innerText = n;
+            if(settings.img) document.getElementById('game-header-img').classList.remove('hidden');
+            
+            currentIdx = 0; score = 0; loadQuestion();
+        }
+
+        function loadQuestion() {
+            document.getElementById('current-q').innerText = currentIdx+1;
+            document.getElementById('total-q').innerText = questions.length;
+            const list = document.getElementById('sortable-list');
+            list.innerHTML = "";
+            document.getElementById('feedback').innerText = "";
+            document.getElementById('next-btn').classList.add('hidden');
+
+            let words = [...questions[currentIdx].words].sort(()=>Math.random()-0.5);
+            words.forEach(w => {
+                const div = document.createElement('div');
+                div.className = 'word-card';
+                div.innerText = w;
+                list.appendChild(div);
+            });
+
+            if(sortableInstance) sortableInstance.destroy();
+            sortableInstance = new Sortable(list, { animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag' });
+        }
+
+        function playAudio(rate) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(questions[currentIdx].full);
+            u.lang = 'zh-TW'; u.rate = rate;
+            window.speechSynthesis.speak(u);
+        }
+
+        let tried = false;
+        function checkAnswer() {
+            if(!document.getElementById('next-btn').classList.contains('hidden')) return;
+            const ans = [...document.querySelectorAll('.word-card')].map(x=>x.innerText).join("");
+            const fb = document.getElementById('feedback');
+            
+            if(ans === questions[currentIdx].full) {
+                fb.innerText = "🎉 答對了！"; fb.style.color = "green";
+                if(!tried) score++;
+                document.getElementById('next-btn').classList.remove('hidden');
+                sortableInstance.option("disabled", true);
+            } else {
+                fb.innerText = "❌ 再試試看"; fb.style.color = "red";
+                tried = true;
+            }
+        }
+
+        function nextQuestion() {
+            currentIdx++; tried = false;
+            if(currentIdx < questions.length) loadQuestion();
+            else {
+                document.getElementById('game-area').classList.add('hidden');
+                document.getElementById('result-area').classList.remove('hidden');
+                document.getElementById('result-title-display').innerText = settings.title;
+                document.getElementById('result-name').innerText = studentName;
+                document.getElementById('final-score').innerText = Math.round((score/questions.length)*100);
+                const d = new Date();
+                document.getElementById('finish-date').innerText = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+            }
+        }
+    </script>
+</body>
+</html>

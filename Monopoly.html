@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>生詞大富翁 - 豪華版</title>
+    <title>生詞大富翁 - 倒數計時版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         /* 字體與動畫設定 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=ZCOOL+KuaiLe&display=swap');
         @keyframes pop { 0% { transform: scale(0.9); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes pulse-red { 0% { color: #ef4444; } 50% { color: #991b1b; } 100% { color: #ef4444; } }
+        
         body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.5s ease; }
         
         /* 署名浮水印 */
@@ -34,9 +36,9 @@
         }
         .center-area {
             grid-column: 2 / 8; grid-row: 2 / 8; display: flex; flex-direction: column; justify-content: center;
-            align-items: center; background: rgba(255,255,255,0.85); border-radius: 12px; padding: 20px; z-index: 10;
+            align-items: center; background: rgba(255,255,255,0.85); border-radius: 12px; padding: 10px; z-index: 10;
         }
-        /* 玩家棋子 (現在是頭像) */
+        /* 玩家棋子 (頭像) */
         .token {
             width: 28px; height: 28px; border-radius: 50%; position: absolute; z-index: 20;
             border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -50,7 +52,7 @@
             border: 3px solid transparent; border-radius: 6px; pointer-events: none;
         }
 
-        /* --- 風格主題變數 (簡化版) --- */
+        /* --- 風格主題變數 --- */
         .theme-morandi { background-color: #e8e6e1; color: #5e5e5e; } .theme-morandi .cell { background: #d6cfc7; }
         .theme-chalkboard { background-color: #2b3a42; color: #eee; font-family: 'ZCOOL KuaiLe'; } .theme-chalkboard .cell { background: #3e505b; border: 1px dashed #777; color:white;}
         .theme-flat { background-color: #f3f4f6; } .theme-flat .cell { background: white; border: 2px solid #e5e7eb; }
@@ -69,6 +71,9 @@
             background: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 420px;
             text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); animation: pop 0.3s; color: #333;
         }
+        
+        /* 計時器動畫 */
+        .timer-urgent { animation: pulse-red 1s infinite; font-weight: 800; color: #ef4444; }
     </style>
 </head>
 <body class="theme-flat h-screen flex flex-col items-center overflow-hidden bg-gray-100">
@@ -77,95 +82,93 @@
 
     <div id="setup-screen" class="w-full h-full absolute top-0 left-0 bg-white z-50 flex flex-col items-center justify-start p-4 overflow-y-auto font-sans text-gray-800">
         <div class="max-w-2xl w-full space-y-5 my-4">
-            <h1 class="text-3xl font-bold text-center text-blue-600">🎲 生詞大富翁 (豪華版)</h1>
+            <h1 class="text-3xl font-bold text-center text-blue-600">⏳ 生詞大富翁 (計時版)</h1>
             
             <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
                 <h2 class="font-bold text-lg">1. 玩家設定</h2>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-white p-3 rounded-lg border">
-                        <label class="block text-sm font-bold text-red-600 mb-1">玩家 1 (P1)</label>
-                        <input type="text" id="p1-name" value="老師" class="w-full border p-1 rounded mb-2 text-sm" placeholder="輸入名字">
-                        <label class="block text-xs text-gray-500 mb-1">選擇頭像</label>
+                        <label class="block text-sm font-bold text-red-600 mb-1">玩家 1</label>
+                        <input type="text" id="p1-name" value="老師" class="w-full border p-1 rounded mb-2 text-sm">
                         <select id="p1-avatar" class="w-full border p-1 rounded text-xl">
                             <option value="👩‍🏫" selected>👩‍🏫 老師A</option>
                             <option value="🦁">🦁 獅子</option>
                             <option value="🤖">🤖 機器人</option>
-                            <option value="🦸‍♀️">🦸‍♀️ 女超人</option>
-                            <option value="🐱">🐱 貓咪</option>
                         </select>
                     </div>
                     <div class="bg-white p-3 rounded-lg border">
-                        <label class="block text-sm font-bold text-blue-600 mb-1">玩家 2 (P2)</label>
-                        <input type="text" id="p2-name" value="學生" class="w-full border p-1 rounded mb-2 text-sm" placeholder="輸入名字">
-                        <label class="block text-xs text-gray-500 mb-1">選擇頭像</label>
+                        <label class="block text-sm font-bold text-blue-600 mb-1">玩家 2</label>
+                        <input type="text" id="p2-name" value="學生" class="w-full border p-1 rounded mb-2 text-sm">
                         <select id="p2-avatar" class="w-full border p-1 rounded text-xl">
                             <option value="👨‍🎓" selected>👨‍🎓 學生B</option>
                             <option value="🦊">🦊 狐狸</option>
                             <option value="🚀">🚀 火箭</option>
-                            <option value="🧙‍♂️">🧙‍♂️ 法師</option>
-                             <option value="🐶">🐶 狗狗</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-                <h2 class="font-bold text-lg">2. 遊戲設定</h2>
-                <div>
-                    <label class="block text-sm text-gray-700 mb-1">選擇風格主題</label>
-                    <select id="theme-select" class="w-full p-2 border border-gray-300 rounded mb-2">
-                        <option value="theme-flat">扁平插畫風 (Flat)</option>
-                        <option value="theme-morandi">莫蘭迪粉彩 (Morandi)</option>
-                        <option value="theme-watercolor">水彩渲染風 (Watercolor)</option>
-                        <option value="theme-chalkboard">教室黑板風 (Chalkboard)</option>
-                        <option value="theme-chibi">Q 版可愛風 (Chibi)</option>
-                        <option value="theme-geometric">暗黑幾何風 (Geometric)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-700 mb-1">設定生詞 (格式: 生詞,拼音)</label>
-                    <textarea id="vocab-input" rows="6" class="w-full p-2 border border-gray-300 rounded font-mono text-sm" placeholder="蘋果,píng guǒ..."></textarea>
-                    <div class="text-xs text-gray-400 text-right">建議輸入 28 個生詞</div>
+            <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                <label class="block font-bold text-lg mb-2 text-yellow-800">⏰ 2. 遊戲時間 (分鐘)</label>
+                <div class="flex items-center gap-4">
+                    <input type="number" id="game-duration" value="10" min="1" max="60" class="w-24 p-2 border border-yellow-400 rounded-lg text-xl text-center font-bold">
+                    <span class="text-sm text-gray-600">分鐘後自動結束，資產多者獲勝。</span>
                 </div>
             </div>
 
-            <button onclick="startGame()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 rounded-xl text-xl shadow-lg transition transform hover:-translate-y-1">
-                🚀 開始遊戲 (Start Game)
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
+                <h2 class="font-bold text-lg">3. 題目與風格</h2>
+                <select id="theme-select" class="w-full p-2 border border-gray-300 rounded mb-2">
+                    <option value="theme-flat">扁平插畫風 (Flat)</option>
+                    <option value="theme-morandi">莫蘭迪粉彩 (Morandi)</option>
+                    <option value="theme-watercolor">水彩渲染風 (Watercolor)</option>
+                    <option value="theme-chalkboard">教室黑板風 (Chalkboard)</option>
+                    <option value="theme-chibi">Q 版可愛風 (Chibi)</option>
+                </select>
+                <textarea id="vocab-input" rows="4" class="w-full p-2 border border-gray-300 rounded font-mono text-sm" placeholder="蘋果,píng guǒ..."></textarea>
+            </div>
+
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 rounded-xl text-xl shadow-lg transition">
+                🚀 開始遊戲
             </button>
         </div>
     </div>
 
     <div id="game-container" class="hidden w-full h-full p-2 flex flex-col items-center justify-center relative">
         
-        <div class="w-full max-w-4xl flex justify-between items-center mb-2 px-2">
-            <div class="flex items-center gap-2 bg-white/80 p-2 rounded-lg shadow border-l-4 border-red-500" id="p1-info-box">
-                <div class="text-2xl" id="p1-avatar-display">👩‍🏫</div>
+        <div class="w-full max-w-4xl flex justify-between items-center mb-2 px-2 gap-2">
+            <div class="flex items-center gap-2 bg-white/80 p-2 rounded-lg shadow border-l-4 border-red-500 flex-1">
+                <div class="text-2xl">👩‍🏫</div>
                 <div>
                     <div class="text-xs opacity-70" id="p1-name-display">老師</div>
                     <div class="font-bold text-red-700">$<span id="p1-money">1000</span></div>
                 </div>
             </div>
             
-            <div class="text-center md:px-4">
-                <div id="turn-indicator" class="text-sm px-4 py-1 bg-gray-800 text-white rounded-full shadow-sm whitespace-nowrap">
+            <div class="flex flex-col items-center justify-center flex-1">
+                <div id="timer-box" class="bg-gray-800 text-white px-4 py-1 rounded-lg font-mono text-xl font-bold shadow-md mb-1 flex items-center gap-2">
+                    <span>⏱️</span>
+                    <span id="time-display">10:00</span>
+                </div>
+                <div id="turn-indicator" class="text-xs px-3 py-1 bg-white/80 rounded-full shadow-sm whitespace-nowrap">
                     等待開始...
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 bg-white/80 p-2 rounded-lg shadow border-l-4 border-blue-500" id="p2-info-box">
-                <div class="text-2xl" id="p2-avatar-display">👨‍🎓</div>
-                <div>
+            <div class="flex items-center gap-2 bg-white/80 p-2 rounded-lg shadow border-l-4 border-blue-500 flex-1 justify-end">
+                <div class="text-right">
                     <div class="text-xs opacity-70" id="p2-name-display">學生</div>
                     <div class="font-bold text-blue-700">$<span id="p2-money">1000</span></div>
                 </div>
+                <div class="text-2xl">👨‍🎓</div>
             </div>
         </div>
 
         <div class="board-grid" id="board">
             <div class="center-area shadow-inner">
-                <div class="text-6xl mb-2 transition-transform" id="dice-display">🎲</div>
+                <div class="text-6xl mb-2" id="dice-display">🎲</div>
                 <button id="roll-btn" onclick="rollDice()" class="px-6 py-2 bg-gray-900 text-white rounded-full text-lg font-bold shadow hover:bg-gray-700 transition">
-                    擲骰子 (Roll)
+                    擲骰子
                 </button>
                 <div id="message-box" class="mt-3 text-center text-sm min-h-[20px] font-medium bg-white/50 px-2 rounded">
                     準備開始!
@@ -175,144 +178,119 @@
 
     </div>
 
-    <div id="quiz-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-gray-500 text-sm mb-2">這個字的拼音是？</h3>
-            <h2 id="quiz-word" class="text-5xl font-bold mb-6 text-center">生詞</h2>
-            <div id="quiz-options" class="space-y-3"></div>
-        </div>
-    </div>
-
-    <div id="buy-modal" class="modal">
-        <div class="modal-content">
-            <div class="text-4xl mb-2">🎉 答對了！</div>
-            <p class="mb-4 text-gray-600">獲得獎金 <span class="text-green-600 font-bold">+$100</span></p>
-            <div class="bg-yellow-50 p-3 rounded-lg mb-4 border border-yellow-200 inline-block">
-                <span class="text-sm text-gray-500">土地價格:</span>
-                <span id="land-price" class="text-2xl font-bold text-yellow-700 ml-2">$200</span>
-            </div>
-            <p class="text-sm mb-4 font-bold" id="buy-prompt-text">要買下這塊地嗎？</p>
-            <div class="flex gap-3 justify-center">
-                <button id="buy-confirm-btn" onclick="handleBuy(true)" class="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-lg font-bold shadow">買 (Buy)</button>
-                <button onclick="handleBuy(false)" class="bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-6 rounded-lg font-bold">不買 (Pass)</button>
-            </div>
-        </div>
-    </div>
-
+    <div id="quiz-modal" class="modal"><div class="modal-content"><h3 class="text-gray-500 text-sm mb-2">拼音是？</h3><h2 id="quiz-word" class="text-5xl font-bold mb-6 text-center">生詞</h2><div id="quiz-options" class="space-y-3"></div></div></div>
+    <div id="buy-modal" class="modal"><div class="modal-content"><div class="text-4xl mb-2">🎉 答對了！</div><p class="mb-4">獎金 <span class="text-green-600 font-bold">+$100</span></p><div class="bg-yellow-50 p-3 rounded mb-4"><span class="text-sm">價格:</span><span id="land-price" class="text-2xl font-bold text-yellow-700 ml-2">$200</span></div><p id="buy-prompt-text" class="mb-4 font-bold">要買嗎？</p><div class="flex gap-3 justify-center"><button id="buy-confirm-btn" onclick="handleBuy(true)" class="bg-green-500 text-white py-2 px-6 rounded font-bold">買</button><button onclick="handleBuy(false)" class="bg-gray-300 py-2 px-6 rounded font-bold">PASS</button></div></div></div>
+    
     <div id="game-over-modal" class="modal">
         <div class="modal-content relative overflow-hidden">
             <h1 class="text-4xl mb-2">🏆 遊戲結束</h1>
-            <div class="text-6xl mb-4" id="winner-avatar">👩‍🏫</div>
-            <p id="winner-text" class="text-2xl font-bold mb-2 text-blue-600">老師獲勝！</p>
-            <p id="win-reason" class="text-gray-500 mb-6">(對手破產)</p>
-            <button onclick="location.reload()" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-10 rounded-full font-bold shadow-lg hover:scale-105 transition">再來一局</button>
+            <div class="text-6xl mb-4" id="winner-avatar">👑</div>
+            <p id="winner-text" class="text-2xl font-bold mb-2 text-blue-600">獲勝者</p>
+            <p id="win-reason" class="text-gray-500 mb-6 font-bold text-red-500 text-lg">時間到！</p>
+            <button onclick="location.reload()" class="bg-blue-600 text-white py-3 px-10 rounded-full font-bold shadow-lg">再來一局</button>
         </div>
     </div>
 
     <script>
-        // --- 音效管理 ---
-        // 使用較穩定的 CDN 音效來源
+        // --- 音效 ---
         const sounds = {
-            dice: new Audio('https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3'), // 骰子聲
-            buy: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'), // 收銀機聲
-            pay: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'), // 損失聲
-            win: new Audio('https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3')  // 勝利聲
+            dice: new Audio('https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3'),
+            buy: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
+            pay: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'),
+            win: new Audio('https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3'),
+            alarm: new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3') // 時間快到
         };
-        // 預載並設定音量
-        Object.values(sounds).forEach(s => { s.volume = 0.5; s.load(); });
+        Object.values(sounds).forEach(s => { s.volume = 0.5; });
 
-        function playSound(name) {
-            // 防止瀏覽器阻擋自動播放，需在使用者互動後觸發
-            sounds[name].currentTime = 0;
-            sounds[name].play().catch(e => console.log("Audio play failed:", e));
-        }
+        function playSound(name) { sounds[name].currentTime = 0; sounds[name].play().catch(()=>{}); }
 
-        // --- 預設資料 ---
+        // --- 變數 ---
         const defaultVocab = `開始,kāi shǐ\n準備,zhǔn bèi\n因為,yīn wèi\n所以,suǒ yǐ\n雖然,suī rán\n但是,dàn shì\n如果,rú guǒ\n覺得,jué de\n喜歡,xǐ huān\n認識,rèn shi\n介紹,jiè shào\n幫忙,bāng máng\n快樂,kuài lè\n容易,róng yì\n簡單,jiǎn dān\n辛苦,xīn kǔ\n健康,jiàn kāng\n運動,yùn dòng\n旅行,lǚ xíng\n參觀,cān guān\n風景,fēng jǐng\n旅館,lǚ guǎn\n機票,jī piào\n護照,hù zhào\n方便,fāng biàn\n麻煩,má fan\n練習,liàn xí\n複習,fù xí`;
         document.getElementById('vocab-input').value = defaultVocab;
 
-        // --- 遊戲狀態 ---
-        let vocabList = [];
-        let tiles = []; // 28 tiles
-        let players = []; // 將在 startGame 初始化
-        let currentPlayerIndex = 0;
-        let isRolling = false;
-        
-        // --- 初始化遊戲 ---
-        function startGame() {
-            // 1. 設定主題
-            const theme = document.getElementById('theme-select').value;
-            document.body.className = `${theme} h-screen flex flex-col items-center overflow-hidden bg-gray-100`;
+        let vocabList = [], tiles = [], players = [], currentPlayerIndex = 0, isRolling = false;
+        let gameTimer = null;
+        let timeRemaining = 600; // 秒
 
-            // 2. 初始化玩家資料
+        // --- 核心與計時 ---
+        function startGame() {
+            // 1. 設定樣式
+            document.body.className = `${document.getElementById('theme-select').value} h-screen flex flex-col items-center overflow-hidden bg-gray-100`;
+
+            // 2. 玩家與時間
+            const durationMin = parseInt(document.getElementById('game-duration').value) || 10;
+            timeRemaining = durationMin * 60;
+            
             players = [
-                { 
-                    id: 0, 
-                    name: document.getElementById('p1-name').value || "玩家1",
-                    avatar: document.getElementById('p1-avatar').value,
-                    money: 1000, pos: 0, color: "#ef4444", borderColor: "border-red-500" 
-                },
-                { 
-                    id: 1, 
-                    name: document.getElementById('p2-name').value || "玩家2",
-                    avatar: document.getElementById('p2-avatar').value,
-                    money: 1000, pos: 0, color: "#3b82f6", borderColor: "border-blue-500" 
-                }
+                { id: 0, name: document.getElementById('p1-name').value, avatar: document.getElementById('p1-avatar').value, money: 1000, pos: 0, color: "#ef4444" },
+                { id: 1, name: document.getElementById('p2-name').value, avatar: document.getElementById('p2-avatar').value, money: 1000, pos: 0, color: "#3b82f6" }
             ];
             
-            // 更新介面上的玩家資訊
             document.getElementById('p1-name-display').innerText = players[0].name;
-            document.getElementById('p1-avatar-display').innerText = players[0].avatar;
             document.getElementById('p2-name-display').innerText = players[1].name;
-            document.getElementById('p2-avatar-display').innerText = players[1].avatar;
-
-            // 3. 處理生詞
+            
+            // 3. 生詞處理
             const input = document.getElementById('vocab-input').value;
-            vocabList = input.trim().split('\n').map(line => {
-                const [word, pinyin] = line.split(',');
-                return { word: word?.trim(), pinyin: pinyin?.trim() };
+            vocabList = input.trim().split('\n').map(l => {
+                const [w, p] = l.split(','); return { word: w?.trim(), pinyin: p?.trim() };
             }).filter(v => v.word && v.pinyin);
-
             while(vocabList.length < 28) vocabList.push({word: "無題", pinyin: "wú tí"});
-            if(vocabList.length > 28) vocabList = vocabList.slice(0, 28);
-
-            // 4. 生成地圖資料
-            tiles = vocabList.map((v, i) => ({
-                id: i, word: v.word, pinyin: v.pinyin,
-                price: Math.floor(Math.random() * 10) * 25 + 25, // 25 ~ 250
-                owner: null
+            tiles = vocabList.slice(0,28).map((v, i) => ({
+                id: i, word: v.word, pinyin: v.pinyin, price: Math.floor(Math.random()*10)*25+25, owner: null
             }));
 
-            // 5. 渲染畫面
+            // 4. 啟動
             renderBoard();
             updateStats();
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
             updateTurnIndicator();
+            startTimer();
         }
 
-        // --- 渲染棋盤邏輯 (8x8 口字型 = 28格) ---
+        function startTimer() {
+            updateTimerDisplay();
+            gameTimer = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                if (timeRemaining <= 0) {
+                    clearInterval(gameTimer);
+                    endGame("timeup");
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+            const s = (timeRemaining % 60).toString().padStart(2, '0');
+            const el = document.getElementById('time-display');
+            el.innerText = `${m}:${s}`;
+            
+            // 最後60秒變紅提醒
+            if (timeRemaining <= 60) {
+                document.getElementById('timer-box').classList.add('timer-urgent', 'bg-red-100', 'text-red-600');
+                document.getElementById('timer-box').classList.remove('bg-gray-800', 'text-white');
+            }
+        }
+
+        // --- 棋盤與邏輯 ---
         function renderBoard() {
             const board = document.getElementById('board');
             const center = document.querySelector('.center-area');
             board.innerHTML = ''; board.appendChild(center);
-
+            
+            // 8x8 Grid Mapping
             const positions = [];
-            for(let i=1; i<=8; i++) positions.push({r:1, c:i}); // Top
-            for(let i=2; i<=7; i++) positions.push({r:i, c:8}); // Right
-            for(let i=8; i>=1; i--) positions.push({r:8, c:i}); // Bottom
-            for(let i=7; i>=2; i--) positions.push({r:i, c:1}); // Left
+            for(let i=1; i<=8; i++) positions.push({r:1, c:i});
+            for(let i=2; i<=7; i++) positions.push({r:i, c:8});
+            for(let i=8; i>=1; i--) positions.push({r:8, c:i});
+            for(let i=7; i>=2; i--) positions.push({r:i, c:1});
 
             tiles.forEach((tile, index) => {
-                const pos = positions[index];
                 const el = document.createElement('div');
                 el.className = 'cell bg-white/90';
-                el.style.gridRow = pos.r; el.style.gridColumn = pos.c; el.id = `cell-${index}`;
-                el.innerHTML = `
-                    <div class="text-[10px] text-gray-400">LAND</div>
-                    <div class="font-bold text-gray-700">$${tile.price}</div>
-                    <div class="owner-mark" id="owner-${index}"></div>
-                `;
+                el.style.gridRow = positions[index].r; el.style.gridColumn = positions[index].c; el.id = `cell-${index}`;
+                el.innerHTML = `<div class="text-[10px] text-gray-400">LAND</div><div class="font-bold text-gray-700">$${tile.price}</div><div class="owner-mark" id="owner-${index}"></div>`;
                 board.appendChild(el);
             });
             updatePlayerTokens();
@@ -322,169 +300,128 @@
             document.querySelectorAll('.token').forEach(e => e.remove());
             players.forEach((p, i) => {
                 const cell = document.getElementById(`cell-${p.pos}`);
-                const token = document.createElement('div');
-                token.className = `token p${i+1}`;
-                token.innerText = p.avatar; // 顯示頭像
-                cell.appendChild(token);
+                const t = document.createElement('div');
+                t.className = `token p${i+1}`; t.innerText = p.avatar;
+                cell.appendChild(t);
             });
         }
 
         function updateStats() {
             document.getElementById('p1-money').innerText = players[0].money;
             document.getElementById('p2-money').innerText = players[1].money;
-            if(players.some(p => p.money < 0) || players.some(p => p.money >= 2500)) endGame(); // 提高一點獲勝門檻到 2500
+            if(players.some(p => p.money < 0)) endGame("bankruptcy");
         }
 
         function updateTurnIndicator() {
             const p = players[currentPlayerIndex];
             const div = document.getElementById('turn-indicator');
             div.innerHTML = `輪到: <span class="font-bold">${p.avatar} ${p.name}</span>`;
-            // div.style.backgroundColor = p.color;
-            div.className = `text-sm px-4 py-2 text-white rounded-full shadow-sm whitespace-nowrap transition-all border-2 ${p.borderColor.replace('border', 'bg')}`;
-            
             document.getElementById('roll-btn').disabled = false;
-            document.getElementById('roll-btn').classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+            document.getElementById('roll-btn').classList.remove('opacity-50');
             document.getElementById('message-box').innerText = `${p.name} 請擲骰子...`;
         }
 
-        // --- 核心遊戲流程 ---
         function rollDice() {
             if(isRolling) return;
-            isRolling = true;
-            playSound('dice'); // 播放音效
-            const btn = document.getElementById('roll-btn');
+            isRolling = true; playSound('dice');
             const display = document.getElementById('dice-display');
+            document.getElementById('roll-btn').disabled = true;
+            document.getElementById('roll-btn').classList.add('opacity-50');
             
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
-            display.classList.add('animate-spin');
-
-            let steps = 0;
-            const interval = setInterval(() => {
+            let steps = 0, interval = setInterval(() => {
                 display.innerText = ['⚀','⚁','⚂','⚃','⚄','⚅'][Math.floor(Math.random()*6)];
-                steps++;
-                if(steps > 8) {
+                if(++steps > 8) {
                     clearInterval(interval);
-                    display.classList.remove('animate-spin');
-                    const stepsToMove = Math.floor(Math.random() * 6) + 1; 
-                    display.innerText = ['⚀','⚁','⚂','⚃','⚄','⚅'][stepsToMove-1];
-                    movePlayer(stepsToMove);
+                    const move = Math.floor(Math.random()*6)+1;
+                    display.innerText = ['⚀','⚁','⚂','⚃','⚄','⚅'][move-1];
+                    movePlayer(move);
                 }
             }, 80);
         }
 
         function movePlayer(steps) {
             const p = players[currentPlayerIndex];
-            let currentSteps = 0;
-            const moveInterval = setInterval(() => {
+            let count = 0;
+            const interval = setInterval(() => {
                 p.pos = (p.pos + 1) % 28;
                 updatePlayerTokens();
-                currentSteps++;
-                if(currentSteps >= steps) {
-                    clearInterval(moveInterval);
+                if(++count >= steps) {
+                    clearInterval(interval);
                     isRolling = false;
                     handleLandEvent(p.pos);
                 }
-            }, 250);
+            }, 200);
         }
 
         function handleLandEvent(pos) {
             const tile = tiles[pos];
             const p = players[currentPlayerIndex];
             const msg = document.getElementById('message-box');
-
+            
             if (tile.owner === null) {
-                msg.innerText = "走到無主地，準備回答問題！";
-                setTimeout(() => showQuiz(tile), 800);
+                msg.innerText = "問答環節！"; setTimeout(() => showQuiz(tile), 600);
             } else if (tile.owner === p.id) {
-                msg.innerText = "回到自己的領地，休息一下。";
-                setTimeout(nextTurn, 1000);
+                msg.innerText = "自己領地，休息。"; setTimeout(nextTurn, 1000);
             } else {
-                const owner = players[tile.owner];
-                msg.innerHTML = `踩到 ${owner.avatar} 的地！支付過路費 <span class="text-red-600 font-bold">$50</span>`;
-                playSound('pay'); // 播放音效
-                p.money -= 50;
-                owner.money += 50;
+                msg.innerHTML = `付過路費 <span class="text-red-600">$50</span>`;
+                playSound('pay');
+                p.money -= 50; players[tile.owner].money += 50;
                 updateStats();
-                // 視覺提示
                 document.getElementById(`cell-${pos}`).style.backgroundColor = '#fee2e2'; 
-                setTimeout(() => {
-                    document.getElementById(`cell-${pos}`).style.backgroundColor = '';
-                    nextTurn();
-                }, 1500);
+                setTimeout(() => { document.getElementById(`cell-${pos}`).style.backgroundColor = ''; nextTurn(); }, 1500);
             }
         }
 
-        // --- 問答與購買 ---
-        let currentQuizTile = null;
         function showQuiz(tile) {
             currentQuizTile = tile;
             const modal = document.getElementById('quiz-modal');
             document.getElementById('quiz-word').innerText = tile.word;
-            const optsEl = document.getElementById('quiz-options');
-            optsEl.innerHTML = '';
-
-            const correctAnswer = tile.pinyin;
-            let distractors = vocabList.filter(v => v.pinyin !== correctAnswer).map(v => v.pinyin)
-                .sort(() => 0.5 - Math.random()).slice(0, 2);
-            const options = [correctAnswer, ...distractors].sort(() => 0.5 - Math.random());
-
-            options.forEach(opt => {
+            const opts = document.getElementById('quiz-options');
+            opts.innerHTML = '';
+            
+            const ans = tile.pinyin;
+            let others = vocabList.filter(v=>v.pinyin!==ans).sort(()=>0.5-Math.random()).slice(0,2);
+            [ans, ...others].sort(()=>0.5-Math.random()).forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = "w-full py-3 px-4 bg-gray-50 hover:bg-blue-100 border border-gray-200 rounded-lg text-lg font-medium transition text-left text-gray-700";
-                btn.innerText = opt;
-                btn.onclick = () => handleAnswer(opt === correctAnswer);
-                optsEl.appendChild(btn);
+                btn.className = "w-full py-3 px-4 bg-gray-50 border border-gray-200 rounded text-lg font-medium hover:bg-blue-100 text-left";
+                btn.innerText = opt.pinyin || opt; // fix obj issue
+                btn.onclick = () => handleAnswer(opt === ans || opt.pinyin === ans);
+                opts.appendChild(btn);
             });
             modal.classList.add('active');
         }
 
-        function handleAnswer(isCorrect) {
+        function handleAnswer(correct) {
             document.getElementById('quiz-modal').classList.remove('active');
-            if(isCorrect) {
-                players[currentPlayerIndex].money += 100;
-                updateStats();
-                showBuyModal();
+            if(correct) {
+                players[currentPlayerIndex].money += 100; updateStats(); showBuyModal();
             } else {
-                document.getElementById('message-box').innerText = "答錯了！無法獲得獎勵。";
-                setTimeout(nextTurn, 1000);
+                document.getElementById('message-box').innerText = "答錯了..."; setTimeout(nextTurn, 1000);
             }
         }
 
         function showBuyModal() {
-            const p = players[currentPlayerIndex];
-            const tile = currentQuizTile;
+            const p = players[currentPlayerIndex], tile = currentQuizTile;
             const modal = document.getElementById('buy-modal');
-            
             document.getElementById('land-price').innerText = `$${tile.price}`;
-            document.getElementById('buy-prompt-text').innerText = `${p.avatar} ${p.name}，要買下這塊地嗎？`;
-            modal.classList.add('active');
+            document.getElementById('buy-prompt-text').innerText = `${p.name} 要買嗎？`;
+            const btn = document.getElementById('buy-confirm-btn');
             
-            const buyBtn = document.getElementById('buy-confirm-btn');
             if(p.money < tile.price) {
-                 buyBtn.disabled = true;
-                 buyBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
-                 buyBtn.innerText = "錢不夠";
+                btn.disabled = true; btn.classList.add('opacity-50', 'bg-gray-400'); btn.innerText = "錢不夠";
             } else {
-                 buyBtn.disabled = false;
-                 buyBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
-                 buyBtn.classList.add('bg-green-500');
-                 buyBtn.innerText = "買 (Buy)";
+                btn.disabled = false; btn.classList.remove('opacity-50', 'bg-gray-400'); btn.classList.add('bg-green-500'); btn.innerText = "買";
             }
+            modal.classList.add('active');
         }
 
-        function handleBuy(shouldBuy) {
+        function handleBuy(buy) {
             document.getElementById('buy-modal').classList.remove('active');
-            const p = players[currentPlayerIndex];
-            const tile = currentQuizTile;
-
-            if(shouldBuy && p.money >= tile.price) {
-                playSound('buy'); // 播放音效
-                p.money -= tile.price;
-                tile.owner = p.id;
-                const mark = document.getElementById(`owner-${tile.id}`);
-                mark.style.borderColor = p.color;
-                mark.style.backgroundColor = p.color + '33';
+            const p = players[currentPlayerIndex], tile = currentQuizTile;
+            if(buy && p.money >= tile.price) {
+                playSound('buy'); p.money -= tile.price; tile.owner = p.id;
+                const mk = document.getElementById(`owner-${tile.id}`);
+                mk.style.borderColor = p.color; mk.style.backgroundColor = p.color+'40';
                 updateStats();
                 document.getElementById('message-box').innerText = "購買成功！";
             } else {
@@ -493,37 +430,37 @@
             setTimeout(nextTurn, 1000);
         }
 
-        function nextTurn() {
-            currentPlayerIndex = (currentPlayerIndex + 1) % 2;
-            updateTurnIndicator();
-        }
+        function nextTurn() { currentPlayerIndex = (currentPlayerIndex+1)%2; updateTurnIndicator(); }
 
-        // --- 遊戲結束與特效 ---
-        function endGame() {
-            playSound('win'); // 播放音效
-            // 施放煙火特效
-            const duration = 3000;
-            const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
-            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-            const interval = setInterval(function() {
-                const timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) return clearInterval(interval);
-                const particleCount = 50 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-            }, 250);
-
-            const p1 = players[0], p2 = players[1];
-            let winner = null, reason = "";
-            if(p1.money < 0) { winner = p2; reason = `(${p1.name} 破產)`; }
-            else if(p2.money < 0) { winner = p1; reason = `(${p2.name} 破產)`; }
-            else if(p1.money >= 2500) { winner = p1; reason = "(資產達標)"; }
-            else if(p2.money >= 2500) { winner = p2; reason = "(資產達標)"; }
+        function endGame(type) {
+            if(gameTimer) clearInterval(gameTimer);
+            playSound('win');
             
+            // 煙火
+            const end = Date.now() + 3000;
+            (function frame() {
+                confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 } });
+                confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 } });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+
+            let p1 = players[0], p2 = players[1], winner, reason;
+            
+            if (type === "timeup") {
+                reason = "時間到！資產結算";
+                // 比較邏輯：現金多者贏
+                if (p1.money > p2.money) winner = p1;
+                else if (p2.money > p1.money) winner = p2;
+                else { winner = {name: "平手", avatar: "🤝"}; }
+            } else {
+                // 破產邏輯
+                if (p1.money < 0) { winner = p2; reason = `${p1.name} 破產`; }
+                else { winner = p1; reason = `${p2.name} 破產`; }
+            }
+
             document.getElementById('winner-avatar').innerText = winner.avatar;
-            document.getElementById('winner-text').innerText = `${winner.name} 獲勝！`;
-            document.getElementById('win-reason').innerText = reason;
+            document.getElementById('winner-text').innerText = winner.name === "平手" ? "平手！" : `${winner.name} 獲勝！`;
+            document.getElementById('win-reason').innerText = `(${reason})`;
             document.getElementById('game-over-modal').classList.add('active');
         }
     </script>

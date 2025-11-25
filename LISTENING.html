@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>華語聽力重組 - 老師出題版</title>
+    <style>
+        body { font-family: 'Microsoft JhengHei', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        /* 通用容器 */
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; }
+        
+        /* 按鈕樣式 */
+        .btn { background-color: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 50px; font-size: 16px; cursor: pointer; margin: 5px; transition: 0.2s; }
+        .btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+        .btn-blue { background-color: #2196F3; }
+        .btn-orange { background-color: #FF9800; }
+        .btn-gray { background-color: #777; font-size: 14px; padding: 8px 16px; }
+
+        /* 老師設定區樣式 */
+        #setup-area textarea { width: 100%; height: 200px; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Microsoft JhengHei'; line-height: 1.5; }
+        .instruction { text-align: left; background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #0d47a1; }
+        
+        /* 遊戲區樣式 (預設隱藏) */
+        #game-area { display: none; }
+        .word-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 30px 0; min-height: 80px; padding: 20px; border: 2px dashed #bbb; border-radius: 10px; background-color: #fafafa; }
+        .word-card { background: white; border: 1px solid #999; padding: 10px 20px; border-radius: 8px; cursor: grab; user-select: none; box-shadow: 0 3px 6px rgba(0,0,0,0.15); font-size: 20px; font-weight: bold; color: #333; touch-action: none; }
+        .word-card:active { cursor: grabbing; background-color: #e8f5e9; transform: scale(0.98); }
+        .word-card.dragging { opacity: 0.4; }
+        
+        #feedback { font-size: 20px; font-weight: bold; min-height: 30px; margin: 15px 0; }
+        .progress { color: #666; margin-bottom: 10px; font-size: 18px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="setup-area" class="container">
+        <h2>✏️ 老師出題設定區</h2>
+        
+        <div class="instruction">
+            <strong>使用說明：</strong><br>
+            1. 請在下方輸入句子，<b>一行一句</b>。<br>
+            2. 重要：請用斜線 <b>/</b> 來切割詞塊。<br>
+            <br>
+            <em>範例：<br>
+            雖然/今天/下雨/，/但是/我們/還是/去/爬山/。<br>
+            我/覺得/中文/的/聲調/很/難/。</em>
+        </div>
+
+        <textarea id="input-sentences" placeholder="請在這裡輸入題目..."></textarea>
+        <br><br>
+        <button class="btn btn-blue" onclick="startGame()">🚀 設定完成，開始上課 (Start)</button>
+    </div>
+
+    <div id="game-area" class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button class="btn btn-gray" onclick="backToSetup()">⚙️ 回設定</button>
+            <div class="progress">第 <span id="current-q">1</span> / <span id="total-q">1</span> 題</div>
+        </div>
+        
+        <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+
+        <button class="btn btn-blue" onclick="playAudio(1)">🔊 正常速度 (Normal)</button>
+        <button class="btn btn-blue" onclick="playAudio(0.7)">🐢 慢速播放 (Slow)</button>
+
+        <p style="color:#555;">請拖曳卡片重組句子：</p>
+
+        <div class="word-container" id="sortable-list"></div>
+
+        <div id="feedback"></div>
+
+        <button class="btn" onclick="checkAnswer()">✅ 檢查答案</button>
+        <button class="btn btn-orange" onclick="nextQuestion()" id="next-btn" style="display:none;">👉 下一題</button>
+    </div>
+
+    <script>
+        let questions = [];
+        let currentIdx = 0;
+        const setupArea = document.getElementById('setup-area');
+        const gameArea = document.getElementById('game-area');
+        const list = document.getElementById('sortable-list');
+        const feedback = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const inputArea = document.getElementById('input-sentences');
+
+        // 預設給老師一個範例
+        inputArea.value = "歡迎/使用/這個/聽力/練習/網站/！\n請/老師/在/設定頁面/輸入/句子/。";
+
+        // --- 老師模式邏輯 ---
+
+        function startGame() {
+            const rawText = inputArea.value.trim();
+            if (!rawText) {
+                alert("請至少輸入一個句子喔！");
+                return;
+            }
+
+            // 解析老師輸入的文字
+            const lines = rawText.split('\n');
+            questions = []; // 清空舊題目
+
+            for (let line of lines) {
+                line = line.trim();
+                if (line) {
+                    // 把 "我/覺得/好" 變成 ["我", "覺得", "好"]
+                    const chunks = line.split('/').map(w => w.trim()).filter(w => w);
+                    if (chunks.length > 0) {
+                        questions.push({
+                            fullSentence: chunks.join(""), // 拼回去變成完整句子給語音唸
+                            words: chunks // 切割好的詞塊陣列
+                        });
+                    }
+                }
+            }
+
+            if (questions.length === 0) return;
+
+            // 切換畫面
+            setupArea.style.display = 'none';
+            gameArea.style.display = 'block';
+            currentIdx = 0;
+            loadQuestion();
+        }
+
+        function backToSetup() {
+            if(confirm("確定要回到設定頁面嗎？目前的進度會消失喔。")) {
+                gameArea.style.display = 'none';
+                setupArea.style.display = 'block';
+            }
+        }
+
+        // --- 學生模式邏輯 ---
+
+        function loadQuestion() {
+            document.getElementById('current-q').innerText = currentIdx + 1;
+            document.getElementById('total-q').innerText = questions.length;
+            feedback.innerText = "";
+            feedback.style.color = "#333";
+            nextBtn.style.display = "none";
+            list.innerHTML = "";
+
+            // 隨機打亂詞塊
+            let shuffledWords = [...questions[currentIdx].words];
+            shuffledWords.sort(() => Math.random() - 0.5);
+
+            shuffledWords.forEach(word => {
+                const item = document.createElement('div');
+                item.classList.add('word-card');
+                item.draggable = true;
+                item.innerText = word;
+                list.appendChild(item);
+
+                // 註冊拖曳事件 (Desktop & Mobile)
+                addDragEvents(item);
+            });
+        }
+
+        // 播放語音
+        function playAudio(rate) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const text = questions[currentIdx].fullSentence; // 唸完整句子
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-TW';
+                utterance.rate = rate;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("您的瀏覽器不支援語音播放");
+            }
+        }
+
+        function checkAnswer() {
+            const currentWords = [...list.querySelectorAll('.word-card')].map(card => card.innerText);
+            const studentSentence = currentWords.join("");
+            const correctSentence = questions[currentIdx].fullSentence;
+
+            if (studentSentence === correctSentence) {
+                feedback.innerText = "🎉 太棒了！答對了！";
+                feedback.style.color = "green";
+                nextBtn.style.display = "inline-block";
+                
+                // 答對時鎖定卡片不讓移動
+                list.querySelectorAll('.word-card').forEach(c => {
+                    c.style.backgroundColor = "#e8f5e9";
+                    c.style.borderColor = "#4CAF50";
+                    c.draggable = false;
+                });
+
+            } else {
+                feedback.innerText = "❌ 順序不太對，再聽一次試試看？";
+                feedback.style.color = "#e53935";
+            }
+        }
+
+        function nextQuestion() {
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                loadQuestion();
+            } else {
+                alert("恭喜！所有題目都練習完了！");
+                backToSetup(); // 回到首頁
+            }
+        }
+
+        // --- 拖曳功能核心 (支援手機觸控) ---
+        let draggedItem = null;
+
+        function addDragEvents(item) {
+            // 電腦版 Mouse Events
+            item.addEventListener('dragstart', () => { draggedItem = item; item.classList.add('dragging'); });
+            item.addEventListener('dragend', () => { draggedItem = null; item.classList.remove('dragging'); });
+
+            // 手機版 Touch Events (簡單實作)
+            item.addEventListener('touchstart', handleTouchStart, {passive: false});
+            item.addEventListener('touchmove', handleTouchMove, {passive: false});
+            item.addEventListener('touchend', handleTouchEnd);
+        }
+
+        // 處理放置區的邏輯
+        list.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(list, e.clientX, e.clientY);
+            const draggable = document.querySelector('.dragging');
+            if (draggable) {
+                if (afterElement == null) {
+                    list.appendChild(draggable);
+                } else {
+                    list.insertBefore(draggable, afterElement);
+                }
+            }
+        });
+
+        function getDragAfterElement(container, x, y) {
+            const draggableElements = [...container.querySelectorAll('.word-card:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                // 簡單判斷：以 X 軸為主，Y 軸輔助
+                const offsetX = x - box.left - box.width / 2;
+                const offsetY = y - box.top - box.height / 2;
+                
+                // 我們主要看是否在該元素左邊 (offsetX < 0) 且距離最近
+                if (offsetX < 0 && offsetX > closest.offset) {
+                    return { offset: offsetX, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // --- 手機觸控拖曳支援 (進階) ---
+        // 為了讓手機也能玩，這裡用了比較原生的方式模擬拖曳
+        // (註：真正完美的觸控拖曳通常需要引用外部函式庫，這裡提供基礎版)
+        let touchDragItem = null;
+
+        function handleTouchStart(e) {
+            touchDragItem = this;
+            this.classList.add('dragging');
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault(); // 防止畫面捲動
+            const touch = e.touches[0];
+            const afterElement = getDragAfterElement(list, touch.clientX, touch.clientY);
+            
+            if (afterElement == null) {
+                list.appendChild(touchDragItem);
+            } else {
+                list.insertBefore(touchDragItem, afterElement);
+            }
+        }
+
+        function handleTouchEnd(e) {
+            this.classList.remove('dragging');
+            touchDragItem = null;
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>華語聽力練習 v2.0</title>
+    <style>
+        /* --- 全域設定 --- */
+        body { font-family: 'Microsoft JhengHei', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; color: #333; transition: background 0.3s; }
+        
+        /* 容器樣式 */
+        .container { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); width: 95%; max-width: 800px; text-align: center; margin-bottom: 20px; position: relative; backdrop-filter: blur(5px); }
+        
+        /* 按鈕樣式 */
+        .btn { border: none; padding: 12px 25px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 8px; transition: transform 0.2s, box-shadow 0.2s; color: white; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+        .btn:active { transform: translateY(4px); box-shadow: none; }
+        .btn:hover { filter: brightness(1.1); }
+        
+        /* 輸入框與文字區 */
+        input[type="text"], textarea, select { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-family: inherit; margin: 5px 0; }
+        textarea { height: 120px; resize: vertical; }
+
+        /* 詞卡樣式 */
+        .word-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0; min-height: 100px; padding: 20px; border: 3px dashed #ccc; border-radius: 15px; background-color: rgba(255,255,255,0.5); }
+        .word-card { background: white; border: 2px solid #888; padding: 10px 20px; border-radius: 12px; cursor: grab; user-select: none; box-shadow: 0 4px 0 #bbb; font-size: 20px; font-weight: bold; color: #444; touch-action: none; }
+        .word-card:active { cursor: grabbing; transform: scale(0.95); }
+        
+        /* 成績單 (Certificate) */
+        .certificate-box { border: 10px double #FFD700; padding: 40px; background: white; border-radius: 20px; position: relative; overflow: hidden; }
+        .stamp { position: absolute; right: 20px; bottom: 20px; font-size: 80px; opacity: 0.2; transform: rotate(-20deg); color: red; font-weight: bold; border: 5px solid red; border-radius: 50%; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; }
+
+        /* 主題配色 Classes */
+        .theme-forest { background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%); }
+        .theme-forest .btn-main { background-color: #2e7d32; }
+        .theme-forest h1 { color: #1b5e20; }
+        
+        .theme-ocean { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .theme-ocean .btn-main { background-color: #0277bd; }
+        .theme-ocean h1 { color: #01579b; }
+
+        .theme-candy { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); }
+        .theme-candy .btn-main { background-color: #ec407a; }
+        .theme-candy h1 { color: #880e4f; }
+
+        /* 隱藏元素 */
+        .hidden { display: none !important; }
+        
+        /* 圖片預覽 */
+        #header-img { max-width: 100%; max-height: 200px; border-radius: 10px; margin-bottom: 10px; object-fit: contain; }
+
+    </style>
+</head>
+<body class="theme-forest"> <h1 id="main-title">🌲 華語聽力練習</h1>
+
+    <div id="teacher-setup" class="container">
+        <h2>🛠️ 老師出題設定</h2>
+        
+        <label>1. 作業標題 (例如：第五課 課後練習)</label>
+        <input type="text" id="input-title" placeholder="請輸入標題...">
+        
+        <label>2. 選擇主題風格</label>
+        <select id="input-theme" onchange="previewTheme()">
+            <option value="theme-forest">🌲 森林探險 (綠色)</option>
+            <option value="theme-ocean">🐳 海洋世界 (藍色)</option>
+            <option value="theme-candy">🍭 糖果樂園 (粉色)</option>
+        </select>
+
+        <label>3. 頁首圖片網址 (選填，可留空)</label>
+        <input type="text" id="input-img" placeholder="貼上圖片連結 (https://...)">
+
+        <label>4. 輸入題目 (一行一句，用 / 切割)</label>
+        <textarea id="input-sentences" placeholder="範例：&#10;我/想/喝/一杯/珍珠奶茶/。&#10;請問/圖書館/在/哪裡/？"></textarea>
+        
+        <button class="btn btn-main" onclick="generateLink()">✨ 產生作業網址</button>
+
+        <div id="result-box" class="hidden" style="margin-top:20px; background:#f0f0f0; padding:15px; border-radius:10px;">
+            <p>✅ 網址已生成！請複製傳給學生：</p>
+            <textarea id="generated-link" style="height:60px; font-size:12px;" readonly></textarea>
+            <button class="btn" style="background:#555;" onclick="copyLink()">📋 複製網址</button>
+            <button class="btn btn-main" onclick="testPlay()">🎮 立即試玩</button>
+        </div>
+    </div>
+
+    <div id="student-login" class="container hidden">
+        <img id="login-img" class="hidden" src="" style="max-width:200px; border-radius:10px;">
+        <h2 id="login-title">歡迎來到聽力練習</h2>
+        <p>請輸入你的名字開始挑戰！</p>
+        <input type="text" id="student-name" placeholder="例如：王小明 / David" style="text-align:center; font-size:20px;">
+        <br><br>
+        <button class="btn btn-main" onclick="startQuiz()">🚀 開始練習</button>
+    </div>
+
+    <div id="game-area" class="container hidden">
+        <div style="display:flex; justify-content:space-between; font-weight:bold; color:#666;">
+            <span>👤 <span id="display-name"></span></span>
+            <span>第 <span id="current-q">1</span> / <span id="total-q">10</span> 題</span>
+        </div>
+        <hr style="opacity:0.3; margin: 15px 0;">
+
+        <img id="game-header-img" class="hidden" src="" style="max-height:150px; margin:0 auto; display:block;">
+
+        <div style="margin: 20px 0;">
+            <button class="btn btn-main" onclick="playAudio(1)">🔊 播放</button>
+            <button class="btn btn-main" style="opacity:0.8; transform:scale(0.9);" onclick="playAudio(0.7)">🐢 慢速</button>
+        </div>
+
+        <p style="color:#555;">請拖曳卡片重組句子：</p>
+        <div class="word-container" id="sortable-list"></div>
+
+        <div id="feedback" style="font-size:20px; height:30px; font-weight:bold; margin:10px;"></div>
+        
+        <button class="btn" style="background:#ff9800;" onclick="checkAnswer()">✅ 檢查答案</button>
+        <button id="next-btn" class="btn btn-main hidden" onclick="nextQuestion()">👉 下一題</button>
+    </div>
+
+    <div id="result-area" class="container hidden">
+        <div class="certificate-box">
+            <h2 style="color:#d32f2f; margin:0;">🏆 聽力練習成績單</h2>
+            <hr style="border: 1px solid #ddd; margin: 15px 0;">
+            
+            <h3 id="result-title-display">作業標題</h3>
+            
+            <p style="font-size:18px;">姓名：<strong id="result-name" style="font-size:24px; text-decoration:underline;"></strong></p>
+            
+            <div style="background:#f9f9f9; padding:20px; border-radius:15px; margin:20px 0;">
+                <span style="font-size:16px; color:#666;">總分</span><br>
+                <span id="final-score" style="font-size:60px; color:#2e7d32; font-weight:bold;">100</span>
+                <span style="font-size:20px;">分</span>
+            </div>
+
+            <p style="color:#888; font-size:14px;">完成日期：<span id="finish-date"></span></p>
+            
+            <div class="stamp">通過</div>
+        </div>
+        <br>
+        <p>🎉 恭喜完成！請截圖傳給老師！</p>
+    </div>
+
+    <script>
+        // --- 全域變數 ---
+        let questions = [];
+        let currentIdx = 0;
+        let score = 0;
+        let studentName = "";
+        let pageSettings = { title: "聽力練習", theme: "theme-forest", img: "" };
+
+        // --- 初始化：判斷是老師還是學生 ---
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const data = urlParams.get('q');
+
+            if (data) {
+                // 有資料 -> 學生模式
+                try {
+                    const decoded = JSON.parse(decodeURIComponent(atob(data)));
+                    questions = decoded.q;
+                    pageSettings = decoded.s || pageSettings; // 讀取設定
+                    enterLoginMode();
+                } catch (e) {
+                    alert("連結無效，請確認網址完整性。");
+                }
+            } else {
+                // 無資料 -> 老師模式
+                document.getElementById('teacher-setup').classList.remove('hidden');
+            }
+        };
+
+        // --- 老師模式功能 ---
+        function previewTheme() {
+            const theme = document.getElementById('input-theme').value;
+            document.body.className = theme;
+        }
+
+        function generateLink() {
+            const title = document.getElementById('input-title').value.trim() || "聽力練習";
+            const theme = document.getElementById('input-theme').value;
+            const img = document.getElementById('input-img').value.trim();
+            const rawText = document.getElementById('input-sentences').value.trim();
+
+            if (!rawText) return alert("請輸入題目！");
+
+            // 處理題目
+            const qList = [];
+            const lines = rawText.split('\n');
+            for (let line of lines) {
+                line = line.trim();
+                if (line) {
+                    const chunks = line.split('/').map(w => w.trim()).filter(w => w);
+                    if (chunks.length > 0) qList.push({ full: chunks.join(""), words: chunks });
+                }
+            }
+
+            if (qList.length === 0) return alert("格式錯誤，請用 / 分隔詞塊");
+
+            // 打包資料
+            const pack = {
+                s: { title: title, theme: theme, img: img }, // Settings
+                q: qList // Questions
+            };
+
+            // 加密網址
+            const jsonString = JSON.stringify(pack);
+            const encoded = btoa(encodeURIComponent(jsonString));
+            const finalUrl = `${window.location.href.split('?')[0]}?q=${encoded}`;
+
+            document.getElementById('result-box').classList.remove('hidden');
+            document.getElementById('generated-link').value = finalUrl;
+        }
+
+        function copyLink() {
+            const copyText = document.getElementById("generated-link");
+            copyText.select();
+            document.execCommand("copy");
+            alert("網址已複製！");
+        }
+        
+        function testPlay() {
+            window.location.href = document.getElementById("generated-link").value;
+        }
+
+        // --- 學生模式功能 ---
+        function enterLoginMode() {
+            document.getElementById('teacher-setup').classList.add('hidden');
+            document.getElementById('student-login').classList.remove('hidden');
+            
+            // 應用設定
+            document.body.className = pageSettings.theme;
+            document.getElementById('main-title').innerText = pageSettings.title;
+            document.getElementById('login-title').innerText = pageSettings.title;
+            
+            if(pageSettings.img) {
+                const imgTag = document.getElementById('login-img');
+                imgTag.src = pageSettings.img;
+                imgTag.classList.remove('hidden');
+            }
+        }
+
+        function startQuiz() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            if (!nameInput) return alert("請輸入名字喔！");
+            
+            studentName = nameInput;
+            document.getElementById('display-name').innerText = studentName;
+            
+            document.getElementById('student-login').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            
+            // 遊戲區圖片
+            if(pageSettings.img) {
+                const gameImg = document.getElementById('game-header-img');
+                gameImg.src = pageSettings.img;
+                gameImg.classList.remove('hidden');
+            }
+
+            currentIdx = 0;
+            score = 0;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            document.getElementById('current-q').innerText = currentIdx + 1;
+            document.getElementById('total-q').innerText = questions.length;
+            const list = document.getElementById('sortable-list');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            
+            feedback.innerText = "";
+            nextBtn.classList.add('hidden');
+            list.innerHTML = "";
+
+            // 隨機排列
+            let words = [...questions[currentIdx].words];
+            words.sort(() => Math.random() - 0.5);
+
+            words.forEach(word => {
+                const item = document.createElement('div');
+                item.classList.add('word-card');
+                item.draggable = true;
+                item.innerText = word;
+                list.appendChild(item);
+                addDragEvents(item);
+            });
+        }
+
+        function playAudio(rate) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(questions[currentIdx].full);
+                u.lang = 'zh-TW';
+                u.rate = rate;
+                window.speechSynthesis.speak(u);
+            }
+        }
+
+        function checkAnswer() {
+            // 防止重複按
+            if(!document.getElementById('next-btn').classList.contains('hidden')) return;
+
+            const currentSentence = [...document.querySelectorAll('.word-card')].map(c => c.innerText).join("");
+            const correct = questions[currentIdx].full;
+            const feedback = document.getElementById('feedback');
+            
+            if (currentSentence === correct) {
+                feedback.innerText = "🎉 答對了！";
+                feedback.style.color = "green";
+                score++; // 加分
+                document.getElementById('next-btn').classList.remove('hidden');
+                
+                // 鎖定卡片
+                document.querySelectorAll('.word-card').forEach(c => {
+                    c.style.background = "#dcedc8";
+                    c.draggable = false;
+                });
+            } else {
+                feedback.innerText = "❌ 再試試看！";
+                feedback.style.color = "red";
+                // 這裡設計：答錯不扣分，但不讓你過下一題，直到答對（但這樣分數怎麼算？)
+                // 修正：答錯顯示提示，允許重排。為了計算分數，我們採用「一次答對才算分」的邏輯？
+                // 為了簡單，這裡採用：答錯不扣分，必須排對才能按下一題，但最終分數計算為：(總題數 - 錯誤次數)? 
+                // 不，最簡單的是：必須答對才能下一題。分數計算我們簡單點：只要完成了就是100分？
+                // 老師的需求是計分。那我們改個邏輯：
+                // 按下檢查時，如果全對 -> 加分並顯示下一題。
+                // 如果錯 -> 提示錯誤，不加分，但必須改對才能下一題 (這樣才有練習效果)。
+                // 這樣分數反映的是「一次就答對的題數」。
+            }
+        }
+        
+        // 修正 checkAnswer 的計分邏輯
+        let hasTriedCurrent = false; // 紀錄當前題目是否嘗試過
+        
+        // 覆蓋上面的 checkAnswer 以支援正確計分
+        checkAnswer = function() {
+             const nextBtn = document.getElementById('next-btn');
+             if(!nextBtn.classList.contains('hidden')) return; // 已經答對過
+
+             const currentSentence = [...document.querySelectorAll('.word-card')].map(c => c.innerText).join("");
+             const correct = questions[currentIdx].full;
+             const feedback = document.getElementById('feedback');
+
+             if (currentSentence === correct) {
+                 feedback.innerText = "🎉 答對了！";
+                 feedback.style.color = "green";
+                 if (!hasTriedCurrent) score++; // 如果是第一次嘗試就對，才加分
+                 
+                 nextBtn.classList.remove('hidden');
+                 document.querySelectorAll('.word-card').forEach(c => {
+                     c.style.background = "#dcedc8";
+                     c.draggable = false;
+                 });
+             } else {
+                 feedback.innerText = "❌ 不對喔，再聽一次！";
+                 feedback.style.color = "#d32f2f";
+                 hasTriedCurrent = true; // 標記已嘗試過（錯過），這題不拿分
+             }
+        }
+
+        function nextQuestion() {
+            currentIdx++;
+            hasTriedCurrent = false; // 重置嘗試狀態
+            if (currentIdx < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('game-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+            
+            // 填寫成績單
+            document.getElementById('result-title-display').innerText = pageSettings.title;
+            document.getElementById('result-name').innerText = studentName;
+            
+            // 計算百分比分數
+            const finalScore = Math.round((score / questions.length) * 100);
+            document.getElementById('final-score').innerText = finalScore;
+            
+            // 日期
+            const d = new Date();
+            document.getElementById('finish-date').innerText = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+            
+            // 播放煙火特效 (選用)
+            // launchConfetti(); 
+        }
+
+        // --- 拖曳事件 ---
+        let draggedItem = null;
+        function addDragEvents(item) {
+            item.addEventListener('dragstart', () => { draggedItem = item; item.classList.add('dragging'); });
+            item.addEventListener('dragend', () => { draggedItem = null; item.classList.remove('dragging'); });
+            item.addEventListener('touchstart', handleTouchStart, {passive:false});
+            item.addEventListener('touchmove', handleTouchMove, {passive:false});
+            item.addEventListener('touchend', handleTouchEnd);
+        }
+        
+        const list = document.getElementById('sortable-list');
+        list.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(list, e.clientX);
+            const draggable = document.querySelector('.dragging');
+            if (draggable) {
+                if (afterElement == null) list.appendChild(draggable);
+                else list.insertBefore(draggable, afterElement);
+            }
+        });
+
+        function getDragAfterElement(container, x) {
+            const draggables = [...container.querySelectorAll('.word-card:not(.dragging)')];
+            return draggables.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = x - box.left - box.width / 2;
+                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+                else return closest;
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        let touchDragItem = null;
+        function handleTouchStart(e) { touchDragItem = this; this.classList.add('dragging'); }
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const t = e.touches[0];
+            const after = getDragAfterElement(list, t.clientX);
+            if (after == null) list.appendChild(touchDragItem);
+            else list.insertBefore(touchDragItem, after);
+        }
+        function handleTouchEnd() { this.classList.remove('dragging'); touchDragItem = null; }
+
+    </script>
+</body>
+</html>

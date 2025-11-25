@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>華語聽力練習 V8.0</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        /* --- 基礎設定 --- */
+        :root { --bg: #fff; --text: #333; --card: #fff; --primary: #555; --border: #ccc; --radius: 10px; --font: 'Microsoft JhengHei', sans-serif; }
+        body { margin: 0; padding: 20px; font-family: var(--font); background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; transition: 0.3s; background-attachment: fixed; padding-bottom: 60px; /* 預留頁尾空間 */ }
+        
+        .container { 
+            background: var(--card); padding: 30px; width: 95%; max-width: 800px; 
+            border-radius: var(--radius); border: 2px solid var(--border); 
+            margin-bottom: 20px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .btn { background: var(--primary); color: #fff; border: none; padding: 10px 25px; border-radius: var(--radius); cursor: pointer; font-size: 16px; margin: 5px; font-family: inherit; transition: 0.2s; box-shadow: 0 3px 0 rgba(0,0,0,0.2); }
+        .btn:active { transform: translateY(3px); box-shadow: none; }
+        
+        input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border); border-radius: var(--radius); box-sizing:

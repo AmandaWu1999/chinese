@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gemini 台灣生詞大富翁 (暖心版)</title>
+    <title>Gemini 台灣生詞大富翁 (藝術文化版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -104,7 +104,7 @@
 
             <div class="bg-green-50 p-2 rounded-xl border border-green-200">
                 <label class="block font-bold text-green-800 mb-1 text-sm">📚 題目 (生詞,拼音)</label>
-                <textarea id="vocab-input" rows="4" class="w-full p-2 border border-green-300 rounded font-mono text-xs" placeholder="開始,kāi shǐ&#10;準備,zhǔn bèi"></textarea>
+                <textarea id="vocab-input" rows="4" class="w-full p-2 border border-green-300 rounded font-mono text-xs" placeholder="場,chǎng..."></textarea>
             </div>
 
             <button onclick="startGame()" class="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white font-bold py-3 rounded-xl text-xl shadow-lg hover:scale-[1.02] transition">🚀 建立題庫並開始</button>
@@ -142,11 +142,56 @@
     <div id="game-over-modal" class="modal"><div class="modal-content relative overflow-hidden"><h1 class="text-3xl font-black mb-2 text-gray-800">🏆 遊戲結束</h1><div class="text-7xl mb-2" id="winner-avatar"></div><p id="winner-text" class="text-2xl font-bold mb-1">獲勝者</p><p id="win-reason" class="text-gray-500 text-sm mb-4"></p><p id="win-detail" class="text-blue-600 font-bold text-xl mb-6"></p><button onclick="location.reload()" class="bg-gradient-to-r from-blue-500 to-green-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg">再來一局</button></div></div>
 
     <script>
-        const rawMapData = [{t:'city',n:'基隆',icon:'🏞️',price:260},{t:'snack',n:'珍珠奶茶',icon:'🧋'},{t:'city',n:'台北',icon:'🏞️',price:300},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'新北',icon:'🏞️',price:280},{t:'snack',n:'蛋餅',icon:'🍳'},{t:'city',n:'桃園',icon:'🏞️',price:240},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'新竹',icon:'🏞️',price:250},{t:'snack',n:'蚵仔煎',icon:'🦪'},{t:'city',n:'台中',icon:'🏞️',price:270},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'南投',icon:'🏞️',price:190},{t:'snack',n:'擔仔麵',icon:'🍜'},{t:'city',n:'台南',icon:'🏞️',price:260},{t:'city',n:'嘉義',icon:'🏞️',price:200},{t:'snack',n:'臭豆腐',icon:'🟨'},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'高雄',icon:'🏞️',price:280},{t:'snack',n:'牛肉麵',icon:'🥩'},{t:'city',n:'屏東',icon:'🏞️',price:220},{t:'city',n:'台東',icon:'🏞️',price:190},{t:'snack',n:'烏龍茶',icon:'🍵'},{t:'city',n:'花蓮',icon:'🏞️',price:210},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'宜蘭',icon:'🏞️',price:230},{t:'city',n:'澎湖',icon:'🏞️',price:170},{t:'city',n:'金馬',icon:'🏞️',price:150}];
+        const rawMapData = [{t:'city',n:'基隆',icon:'🏞️',price:260},{t:'snack',n:'珍珠奶茶',icon:'🧋'},{t:'city',n:'台北',icon:'🏞️',price:300},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'新北',icon:'🏞️',price:280},{t:'snack',n:'蛋餅',icon:'🍳'},{t:'city',n:'桃園',icon:'🏞️',price:240},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'新竹',icon:'🏞️',price:250},{t:'snack',n:'蚵仔煎',icon:'🦪'},{t:'city',n:'台中',icon:'🏞️',price:270},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'南投',icon:'🏞️',price:190},{t:'snack',n:'擔仔麵',icon:'🍜'},{t:'city',n:'台南',icon:'🏞️',price:260},{t:'city',n:'嘉義',icon:'🏞️',price:200},{t:'snack',n:'臭豆腐',icon:'🟨'},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'高雄',icon:'🏞️',price:280},{t:'snack',n:'牛肉麵',icon:'🥩'},{t:'city',n:'屏東',icon:'🏞️',price:220},{t:'city',n:'台東',icon:'🏞️',price:190},{t:'snack',n:'烏龍茶',icon:'🍵'},{t:'city',n:'花蓮',icon:'🏞️',price:210},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'宜蘭',icon:'🏞️',price:230},{t:'city',n:'澎湖',icon:'🏞️',price:170},{t:'city',n:'金馬',icon:'🏞️',price:150}];
         const borderColors = ['border-g-red', 'border-g-blue', 'border-g-yellow', 'border-g-green'];
         const sounds = { dice: new Audio('https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3'), buy: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'), pay: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'), win: new Audio('https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3'), eat: new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3') };
         Object.values(sounds).forEach(s => s.volume = 0.4);
-        const defaultVocab = `開始,kāi shǐ\n準備,zhǔn bèi\n因為,yīn wèi\n所以,suǒ yǐ\n雖然,suī rán\n但是,dàn shì\n如果,rú guǒ\n覺得,jué de\n喜歡,xǐ huān\n認識,rèn shi\n介紹,jiè shào\n幫忙,bāng máng\n快樂,kuài lè\n容易,róng yì\n簡單,jiǎn dān\n辛苦,xīn kǔ\n健康,jiàn kāng\n運動,yùn dòng\n旅行,lǚ xíng\n參觀,cān guān\n風景,fēng jǐng\n旅館,lǚ guǎn\n機票,jī piào\n護照,hù zhào\n方便,fāng biàn\n麻煩,má fan\n練習,liàn xí\n複習,fù xí`;
+        
+        // 更新預設題庫
+        const defaultVocab = `場,chǎng
+強調,qiángdiào
+團體,tuántǐ
+千萬,qiānwàn
+鋼琴,gāngqín
+小提琴,xiǎotíqín
+古典,gǔdiǎn
+畫家,huàjiā
+畫,huà
+舞蹈,wǔdǎo
+文學,wénxué
+繪畫,huìhuà
+等,děng
+寺廟,sìmiào
+表現,biǎoxiàn
+之,zhī
+劇情,jùqíng
+導演,dǎoyǎn
+所,suǒ
+紅,hóng
+明星,míngxīng
+演技,yǎnjì
+得,dé
+獎,jiǎng
+廣場,guǎngchǎng
+或,huò
+仔細,zǐxì
+留意,liúyì
+處處,chùchù
+滿足,mǎnzú
+豐盛,fēngshèng
+國家戲劇院,Guójiā Xìjùyuàn
+雲門舞集,Yúnmén Wǔjí
+國家音樂廳,Guójiā Yīnyuètīng
+金馬影展,Jīnmǎ Yǐngzhǎn
+現代舞,xiàndài wǔ
+無人不知,wúrén bùzhī
+百聞不如一見,bǎiwén bùrú yíjiàn
+老街,lǎojiē
+街頭藝術,jiētóu yìshù
+裝置藝術,zhuāngzhì yìshù
+填飽,tiánbǎo
+口腹之慾,kǒufù zhīyù`;
+        
         document.getElementById('vocab-input').value = defaultVocab;
 
         let tiles=[], players=[], turn=0, rolling=false, timer=null, timeLeft=600, vocabList=[], pendingTile=null;
@@ -321,7 +366,6 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         function nextTurn() { turn=(turn+1)%players.length; updateTurn(); }
 
-        // 資產計算與結算
         function calculateAssets(p) {
             let landVal = tiles.filter(t => t.owner === p.id).reduce((sum, t) => sum + t.price, 0);
             return p.m + landVal;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日看圖聽力 V6.0</title>
+    <title>每日看圖聽力 V6.1 (圖庫修正)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@
         
         /* 圖片選擇區 */
         .img-select-container { display: flex; gap: 10px; margin-bottom: 10px; flex-direction: column; }
-        .img-preview-box { width: 100%; height: 150px; background: #eee; border-radius: 6px; display: none; object-fit: cover; border: 1px solid #ddd; }
+        .img-preview-box { width: 100%; height: 200px; background: #eee; border-radius: 6px; display: none; object-fit: contain; border: 1px solid #ddd; }
         
         .option-row { display: flex; gap: 10px; align-items: center; }
 
@@ -60,13 +60,13 @@
 <body class="style-morandi">
 
     <div class="footer-credit">Designed by <span>台師大吳穎純老師</span> | Powered by AI Tool</div>
-    <h1 id="page-title">📷 每日看圖聽力 V6</h1>
+    <h1 id="page-title">📷 每日看圖聽力 V6.1</h1>
 
     <div id="teacher-setup" class="container">
-        <h2>✏️ 老師出題 (輕量極速版)</h2>
+        <h2>✏️ 老師出題 (圖庫修正版)</h2>
         
         <div class="instruction-box">
-            <b>💡 輕量化說明：</b> 為了確保網址能順利開啟，本版本移除上傳功能，改用<b>內建圖庫</b>或<b>網址連結</b>。<br>
+            <b>💡 圖片來源：</b> 已更新為穩定圖庫，不會再出現破圖或內容不符。<br>
             <b>🎧 試聽：</b> 記得按橘色按鈕檢查發音。<br>
             <b>🔧 糾音：</b> 使用 <span class="code-tag">{顯示字|同音字}</span>。
         </div>
@@ -88,7 +88,7 @@
         <button class="btn" onclick="generateLink()">✨ 產生作業連結</button>
 
         <div id="result-box" class="hidden" style="margin-top:20px; padding:15px; border:1px solid var(--border); background: rgba(255,255,255,0.5);">
-            <p id="url-status">✅ 網址已生成 (輕量化)：</p>
+            <p id="url-status">✅ 網址已生成：</p>
             <textarea id="generated-link" style="height:60px; font-size:12px;" readonly></textarea>
             <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
                 <button class="btn" onclick="copyLink()">📋 複製網址</button>
@@ -118,7 +118,7 @@
         </div>
         
         <div style="text-align:center; margin: 15px 0;">
-            <button class="btn" onclick="playAudio(1)">▶️ 正常速度</button>
+            <button class="btn" onclick="playAudio(1)">🔊 播放</button>
             <button class="btn" style="background:#00897B;" onclick="playAudio(0.75)">🐢 慢速 (0.75x)</button>
         </div>
 
@@ -153,7 +153,7 @@
         function getSpeechText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$2'); }
         function getDisplayText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$1'); }
 
-        // --- 1. 產生題目框 (V6: 改為選單式圖片) ---
+        // --- 1. 產生題目框 (修正後的圖庫) ---
         window.addEventListener('DOMContentLoaded', () => {
             const wrapper = document.getElementById('questions-wrapper');
             if (wrapper) {
@@ -165,16 +165,16 @@
                             <div class="img-select-container">
                                 <select id="img-select-${i}" onchange="handleImgSelect(${i})">
                                     <option value="">(請選擇圖片)</option>
-                                    <option value="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600">🏫 學校/教室</option>
-                                    <option value="https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=600">☕ 咖啡/餐廳</option>
+                                    <option value="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600">🏫 學校/教室</option>
+                                    <option value="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600">☕ 咖啡/餐廳</option>
                                     <option value="https://images.unsplash.com/photo-1542838132-92c53300491e?w=600">🛒 超市/購物</option>
-                                    <option value="https://images.unsplash.com/photo-1584515933487-9dd86ad2b007?w=600">🏥 醫院/看病</option>
-                                    <option value="https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600">🏠 家庭/客廳</option>
-                                    <option value="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600">📚 圖書館/書</option>
-                                    <option value="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600">🌳 公園/風景</option>
-                                    <option value="https://images.unsplash.com/photo-1496449903678-68ddcb189a24?w=600">🚗 交通/城市</option>
-                                    <option value="https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=600">🐶 動物/寵物</option>
-                                    <option value="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=600">🥗 食物/水果</option>
+                                    <option value="https://images.unsplash.com/photo-1538108149393-fbbd8189718c?w=600">🏥 醫院/看病 (新)</option>
+                                    <option value="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600">🏠 家庭/客廳</option>
+                                    <option value="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600">📚 圖書館/書</option>
+                                    <option value="https://images.unsplash.com/photo-1496347315686-5f274d083ece?w=600">🌳 公園/風景</option>
+                                    <option value="https://images.unsplash.com/photo-1449824913929-49db36000636?w=600">🚗 交通/城市 (新)</option>
+                                    <option value="https://images.unsplash.com/photo-1517849845537-4d257902454a?w=600">🐶 動物/寵物 (新)</option>
+                                    <option value="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600">🥗 食物/水果 (新)</option>
                                     <option value="custom">🔗 自行輸入網址...</option>
                                 </select>
                                 <input type="text" id="custom-url-${i}" placeholder="貼上圖片連結 (https://...)" style="display:none;">
@@ -205,7 +205,6 @@
             if(select.value === 'custom') {
                 customInput.style.display = 'block';
                 preview.style.display = 'none';
-                // 綁定輸入事件即時預覽
                 customInput.oninput = function() {
                     if(this.value) { preview.src = this.value; preview.style.display = 'block'; }
                 };
@@ -237,11 +236,9 @@
             
             let qList = [];
             qBlocks.forEach((block, idx) => {
-                // 抓取圖片連結
                 const select = block.querySelector('select');
                 const custom = block.querySelector('input[type="text"][id^="custom"]');
                 let imgUrl = "";
-                
                 if(select.value === 'custom') imgUrl = custom.value.trim();
                 else imgUrl = select.value;
 
@@ -253,7 +250,6 @@
                 ];
                 const correct = block.querySelector(`input[name="q${idx+1}"]:checked`).value;
                 
-                // 只收入有填寫的題目
                 if (text && opts[0]) qList.push({ img: imgUrl, text, opts, correct: parseInt(correct) });
             });
 
@@ -333,7 +329,6 @@
             if (currentIdx >= questionsData.length) { showResult(); return; }
             const q = questionsData[currentIdx];
             document.getElementById('current-q').innerText = currentIdx + 1;
-            // 顯示圖片，若無則顯示預設圖
             document.getElementById('q-img').src = q.img || "https://via.placeholder.com/400x250?text=No+Image";
             const area = document.getElementById('options-area');
             area.innerHTML = "";
@@ -343,7 +338,6 @@
                 if(!optText) return; 
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
-                // 顯示時過濾糾音符號
                 btn.innerText = getDisplayText(optText);
                 btn.onclick = () => checkAnswer(idx, btn);
                 area.appendChild(btn);

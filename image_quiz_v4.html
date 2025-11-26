@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日看圖聽力 V3.0</title>
+    <title>每日看圖聽力 V4.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
@@ -16,11 +16,14 @@
         .btn { background: var(--primary); color: #fff; border: none; padding: 12px 24px; border-radius: 50px; cursor: pointer; font-size: 16px; margin: 8px; font-family: inherit; transition: 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
         .btn:hover { filter: brightness(1.1); }
         .btn-upload { background: #00897B; font-size: 14px; padding: 8px 15px; }
-        .btn-tiny { background: #E91E63; } /* 縮網址按鈕顏色 */
+        .btn-tiny { background: #E91E63; } 
         
         input[type="text"], select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 15px; }
 
-        /* 題目區 */
+        /* 提示與題目區 */
+        .instruction-box { background: #E3F2FD; border-left: 5px solid #2196F3; padding: 15px; margin-bottom: 20px; border-radius: 4px; font-size: 14px; color: #333; }
+        .code-tag { background: #fff; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #D32F2F; font-weight: bold; border: 1px solid #ccc; }
+
         .q-block { background: rgba(0,0,0,0.03); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--border); }
         .q-block h3 { margin: 0 0 10px 0; color: var(--primary); }
         .img-control-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
@@ -49,8 +52,6 @@
 
         .hidden { display: none !important; }
         .stamp { position: absolute; right: 20px; bottom: 20px; font-size: 40px; border: 3px solid #D32F2F; color: #D32F2F; padding: 15px; transform: rotate(-15deg); border-radius: 50%; opacity: 0.8; font-weight: bold; background: rgba(255,255,255,0.8); }
-        
-        /* 載入中遮罩 */
         #loading-mask { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; display:flex; justify-content:center; align-items:center; color:white; font-size:20px; }
     </style>
 </head>
@@ -58,10 +59,17 @@
 
     <div id="loading-mask" class="hidden">🔄 正在處理圖片並產生網址...</div>
     <div class="footer-credit">Designed by <span>台師大吳穎純老師</span> | Powered by AI Tool</div>
-    <h1 id="page-title">📷 每日看圖聽力 V3</h1>
+    <h1 id="page-title">📷 每日看圖聽力 V4</h1>
 
     <div id="teacher-setup" class="container">
-        <h2>✏️ 老師出題 (自動縮址版)</h2>
+        <h2>✏️ 老師出題</h2>
+        
+        <div class="instruction-box">
+            <b>💡 破音字修正功能：</b><br>
+            如果單字唸錯，請用 <span class="code-tag">{顯示字|同音字}</span> 格式。<br>
+            例如：輸入 <span class="code-tag">這是一行{行|航}字</span>，電腦就會唸對「航」的音。
+        </div>
+
         <label>1. 選擇風格</label>
         <select id="input-style" onchange="previewStyle()">
             <option value="style-morandi">1. 莫蘭迪 Morandi</option>
@@ -79,15 +87,13 @@
         <button class="btn" onclick="generateLink()">✨ 產生作業連結</button>
 
         <div id="result-box" class="hidden" style="margin-top:20px; padding:15px; border:1px solid var(--border); background: rgba(255,255,255,0.5);">
-            <p id="url-status">✅ 網址已生成 (原始網址)：</p>
+            <p id="url-status">✅ 網址已生成：</p>
             <textarea id="generated-link" style="height:60px; font-size:12px;" readonly></textarea>
-            
             <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
                 <button class="btn" onclick="copyLink()">📋 複製網址</button>
-                <button class="btn btn-tiny" onclick="tryAutoShorten()">🪄 嘗試自動縮短 (TinyURL)</button>
+                <button class="btn btn-tiny" onclick="tryAutoShorten()">🪄 自動縮短 (TinyURL)</button>
                 <button class="btn" onclick="testPlay()">🎮 試玩</button>
             </div>
-            <p style="font-size:12px; color:#666; margin-top:5px;">* 如果網址太長導致無法分享，請按「嘗試自動縮短」。</p>
         </div>
     </div>
 
@@ -105,13 +111,16 @@
             <span>第 <span id="current-q">1</span> / 5 題</span>
         </div>
         <hr style="border-top: 1px solid var(--border); margin: 15px 0;">
+        
         <div class="quiz-image-box">
             <img id="q-img" src="" alt="題目圖片">
         </div>
-        <div style="text-align:center;">
-            <button class="btn" onclick="playAudio(1)">🔊 播放</button>
-            <button class="btn" style="opacity:0.8; font-size:14px;" onclick="playAudio(0.7)">🐢 慢速</button>
+        
+        <div style="text-align:center; margin: 15px 0;">
+            <button class="btn" onclick="playAudio(1)">▶️ 正常速度</button>
+            <button class="btn" style="background:#00897B;" onclick="playAudio(0.75)">🐢 慢速 (0.75x)</button>
         </div>
+
         <div class="options-grid" id="options-area"></div>
         <div id="feedback" style="text-align:center; height:30px; margin-top:10px; font-weight:bold;"></div>
     </div>
@@ -139,6 +148,10 @@
         const correctSound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/success.mp3');
         const victorySound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/victory.mp3');
 
+        // --- 核心：糾音解析 ---
+        function getSpeechText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$2'); }
+        function getDisplayText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$1'); }
+
         // --- 1. 產生題目框 ---
         window.addEventListener('DOMContentLoaded', () => {
             const wrapper = document.getElementById('questions-wrapper');
@@ -154,7 +167,7 @@
                                 <input type="text" id="url-${i}" class="input-img" style="flex:1;" placeholder="貼上圖片網址...">
                                 <img id="preview-${i}" class="preview-thumb">
                             </div>
-                            <input type="text" class="input-text" placeholder="聽力文稿 (例如：這是一隻貓)">
+                            <input type="text" class="input-text" placeholder="聽力文稿 (如：這是一行{行|航}字)">
                             <div style="margin-top:5px;">
                                 <div class="option-row"><input type="radio" name="q${i}" value="0" checked> <input type="text" class="opt-0" placeholder="選項 A"></div>
                                 <div class="option-row"><input type="radio" name="q${i}" value="1"> <input type="text" class="opt-1" placeholder="選項 B"></div>
@@ -167,36 +180,26 @@
             checkUrlData();
         });
 
-        // --- 2. 強力圖片壓縮 (V3 核心) ---
+        // --- 2. 圖片處理 ---
         function handleFileUpload(input, index) {
             const file = input.files[0];
             if(!file) return;
-            
             document.getElementById('loading-mask').classList.remove('hidden');
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    // 限制最大寬度為 250px (大幅減少體積)
                     const maxWidth = 250;
                     const scale = maxWidth / img.width;
-                    canvas.width = maxWidth;
-                    canvas.height = img.height * scale;
-                    
+                    canvas.width = maxWidth; canvas.height = img.height * scale;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // 使用 JPEG 格式，品質壓縮到 0.5
                     const compressedData = canvas.toDataURL('image/jpeg', 0.5);
-                    
                     document.getElementById(`url-${index}`).value = compressedData;
                     const thumb = document.getElementById(`preview-${index}`);
-                    thumb.src = compressedData;
-                    thumb.style.display = "block";
-                    
+                    thumb.src = compressedData; thumb.style.display = "block";
                     document.getElementById('loading-mask').classList.add('hidden');
                 }
             }
@@ -215,8 +218,7 @@
                 const img = block.querySelector('.input-img').value.trim();
                 const text = block.querySelector('.input-text').value.trim();
                 const opts = [
-                    block.querySelector('.opt-0').value.trim(),
-                    block.querySelector('.opt-1').value.trim(),
+                    block.querySelector('.opt-0').value.trim(), block.querySelector('.opt-1').value.trim(),
                     block.querySelector('.opt-2').value.trim()
                 ];
                 const correct = block.querySelector(`input[name="q${idx+1}"]:checked`).value;
@@ -226,51 +228,40 @@
             if (qList.length < 1) return alert("請至少輸入一題");
 
             const pack = { s: { title, style }, q: qList };
-            const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(pack));
+            const jsonStr = JSON.stringify(pack);
+            const compressed = LZString.compressToEncodedURIComponent(jsonStr);
             const url = `${window.location.href.split('?')[0]}?data=${compressed}`;
             
             document.getElementById('result-box').classList.remove('hidden');
             document.getElementById('generated-link').value = url;
-            document.getElementById('url-status').innerText = "✅ 網址已生成 (原始長網址)：";
         }
 
-        // --- 3. 自動縮網址 (TinyURL API) ---
         function tryAutoShorten() {
             const longUrl = document.getElementById('generated-link').value;
             if(!longUrl) return;
-
             const btn = document.querySelector('.btn-tiny');
-            btn.innerText = "⏳ 處理中...";
-            btn.disabled = true;
-
-            // 嘗試使用 fetch 呼叫 TinyURL
+            btn.innerText = "⏳ 處理中..."; btn.disabled = true;
             fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl))
-            .then(response => {
-                if (response.ok) return response.text();
-                throw new Error('Network response was not ok.');
-            })
+            .then(res => res.ok ? res.text() : null)
             .then(shortUrl => {
-                document.getElementById('generated-link').value = shortUrl;
-                document.getElementById('url-status').innerText = "✨ 成功！這是您的短網址：";
-                btn.innerText = "✅ 成功縮短";
-                alert("縮網址成功！現在可以直接複製使用了。");
+                if(shortUrl) {
+                    document.getElementById('generated-link').value = shortUrl;
+                    document.getElementById('url-status').innerText = "✨ 縮網址成功：";
+                    btn.innerText = "✅ 成功";
+                } else throw new Error();
             })
-            .catch(error => {
-                console.error('縮網址失敗:', error);
-                btn.innerText = "❌ 自動縮短失敗";
-                // 失敗時提供備用方案
-                if(confirm("自動縮短失敗 (可能是網址太長或網路問題)。\n\n是否要開啟 TinyURL 網站手動縮短？\n(我會先幫您複製好網址)")) {
-                    copyLink();
-                    window.open("https://tinyurl.com/app", "_blank");
+            .catch(() => {
+                btn.innerText = "❌ 失敗";
+                if(confirm("自動縮網址失敗，是否手動開啟 TinyURL？")) {
+                    copyLink(); window.open("https://tinyurl.com/app", "_blank");
                 }
             });
         }
 
         function copyLink() {
-            const text = document.getElementById('generated-link');
-            text.select();
+            document.getElementById('generated-link').select();
             document.execCommand('copy');
-            alert("網址已複製到剪貼簿！");
+            alert("已複製");
         }
         function testPlay() { window.location.href = document.getElementById('generated-link').value; }
 
@@ -281,8 +272,7 @@
             if (data) {
                 try {
                     const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(data));
-                    questionsData = decoded.q;
-                    settings = decoded.s;
+                    questionsData = decoded.q; settings = decoded.s;
                     enterStudentMode();
                 } catch (e) { console.error(e); }
             } else {
@@ -316,20 +306,26 @@
             const area = document.getElementById('options-area');
             area.innerHTML = "";
             document.getElementById('feedback').innerText = "";
+            
             q.opts.forEach((optText, idx) => {
                 if(!optText) return; 
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
-                btn.innerText = optText;
+                // 顯示文字 (過濾掉糾音符號)
+                btn.innerText = getDisplayText(optText);
                 btn.onclick = () => checkAnswer(idx, btn);
                 area.appendChild(btn);
             });
         }
 
+        // 播放邏輯 (支援糾音 + 變速)
         function playAudio(rate) {
             window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(questionsData[currentIdx].text);
-            u.lang = 'zh-TW'; u.rate = rate;
+            // 讀取文字 (只取右邊的讀音字)
+            const textToRead = getSpeechText(questionsData[currentIdx].text);
+            const u = new SpeechSynthesisUtterance(textToRead);
+            u.lang = 'zh-TW'; 
+            u.rate = rate; // 套用按鈕傳進來的速度
             window.speechSynthesis.speak(u);
         }
 

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>華語句子重組 V9.0</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        /* --- 基礎設定 --- */
+        :root { --bg: #fff; --text: #333; --card: #fff; --primary: #555; --border: #ccc; --radius: 10px; --font: 'Microsoft JhengHei', sans-serif; }
+        body { margin: 0; padding: 20px; font-family: var(--font); background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; transition: 0.3s; background-attachment: fixed; padding-bottom: 60px; }
+        
+        .container { 
+            background: var(--card); padding: 30px; width: 95%; max-width: 800px; 
+            border-radius: var(--radius); border: 2px solid var(--border); 
+            margin-bottom: 20px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .btn { background: var(--primary); color: #fff; border: none; padding: 10px 25px; border-radius: var(--radius); cursor: pointer; font-size: 16px; margin: 5px; font-family: inherit; transition: 0.2s; box-shadow: 0 3px 0 rgba(0,0,0,0.2); }
+        .btn:active { transform: translateY(3px); box-shadow: none; } .btn:hover { filter: brightness(1.1); }
+        .btn-upload { background: #00897B; font-size: 14px; padding: 8px 15px; }
+        .btn-tiny { background: #E91E63; }
+
+        input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border); border-radius: var(--radius); box-sizing: border-box; font-family: inherit; font-size: 16px;}
+
+        /* 說明與圖片控制區 */
+        .instruction-box { background: #E3F2FD; border-left: 5px solid #2196F3; padding: 15px; margin-bottom: 20px; border-radius: 4px; font-size: 14px; color: #333; line-height: 1.6; }
+        .code-tag { background: #fff; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #D32F2F; font-weight: bold; border: 1px solid #ccc; }
+        
+        .img-control-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .preview-thumb { height: 50px; object-fit: contain; border-radius: 4px; border: 1px solid #ddd; display: none; background: #eee; }
+
+        /* 詞卡通用 */
+        .word-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; min-height: 100px; padding: 25px; border: 2px dashed var(--border); border-radius: var(--radius); background: rgba(255,255,255,0.4); margin: 20px 0; }
+        .word-card { background: #fff; border: 2px solid var(--primary); padding: 12px 20px; border-radius: var(--radius); cursor: grab; font-size: 20px; font-weight: bold; user-select: none; touch-action: none; box-shadow: 3px 3px 0 rgba(0,0,0,0.15); transition: transform 0.1s; }
+        .word-card:active { transform: scale(0.95); }
+        .sortable-ghost { opacity: 0.4; background: #eee; } .sortable-drag { transform: rotate(3deg) scale(1.1); cursor: grabbing; }
+
+        /* 署名頁尾 */
+        .footer-credit { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255, 255, 255, 0.9); text-align: center; padding: 10px 0; font-size: 14px; color: #666; border-top: 1px solid #ddd; backdrop-filter: blur(5px); z-index: 999; }
+        .footer-credit span { font-weight: bold; color: #333; }
+
+        /* --- 風格定義 (與 V8 相同) --- */
+        body.style-morandi { --bg: #D8E2DC; --card: #F9F7F2; --primary: #9D8189; --text: #6D6875; --border: #B5B2BE; --radius: 12px; --font: 'Noto Serif TC', serif; } body.style-morandi .container { border: none; box-shadow: 0 10px 30px rgba(157, 129, 137, 0.2); }
+        body.style-watercolor { --bg: #E3F2FD; --card: rgba(255,255,255,0.9); --primary: #0288D1; --text: #01579B; --border: #81D4FA; --radius: 25px; --font: 'Zen Maru Gothic', sans-serif; background-image: radial-gradient(circle at 10% 10%, #B3E5FC 0%, transparent 40%), radial-gradient(circle at 90% 80%, #E1F5FE 0%, transparent 40%); } body.style-watercolor .word-card { border-color: #B3E5FC; box-shadow: 0 5px 15px rgba(3,169,244,0.2); color: #0277BD; }
+        body.style-flat { --bg: #FFD54F; --card: #FFF; --primary: #000; --text: #000; --border: #000; --radius: 0px; --font: 'Microsoft JhengHei', sans-serif; } body.style-flat .container { border: 4px solid #000; box-shadow: 8px 8px 0 #000; } body.style-flat .btn { border: 3px solid #000; background: #29B6F6; color: #000; font-weight: 900; box-shadow: 4px 4px 0 #000; } body.style-flat .word-card { border: 3px solid #000; box-shadow: 5px 5px 0 #000; background: #FF8A65; color: #fff; }
+        body.style-geometric { --bg: #212121; --card: #333; --primary: #00E676; --text: #EEE; --border: #444; --radius: 5px; --font: sans-serif; background-image: linear-gradient(30deg, #2a2a2a 12%, transparent 12.5%, transparent 87%, #2a2a2a 87.5%, #2a2a2a), linear-gradient(150deg, #2a2a2a 12%, transparent 12.5%, transparent 87%, #2a2a2a 87.5%, #2a2a2a); background-size: 40px 70px; } body.style-geometric .container { border: 1px solid #555; box-shadow: 0 0 20px rgba(0,230,118,0.1); } body.style-geometric .word-card { background: #424242; color: #fff; border: 1px solid #00E676; }
+        body.style-scene { --bg: #D7CCC8; --card: #FFF3E0; --primary: #5D4037; --text: #3E2723; --border: #8D6E63; --radius: 8px; --font: 'Noto Serif TC', serif; background: repeating-linear-gradient(45deg, #bcaaa4, #bcaaa4 10px, #a1887f 10px, #a1887f 20px); } body.style-scene .container { border: 6px solid #5D4037; background: #FFF8E1; } body.style-scene .word-card { background: #EFEBE9; border-bottom: 4px solid #8D6E63; }
+        body.style-cute { --bg: #81D4FA; --card: #fff; --primary: #FF80AB; --text: #880E4F; --border: #fff; --radius: 30px; --font: 'Zen Maru Gothic', sans-serif; background-image: radial-gradient(circle 20px at 10% 20%, white 99%, transparent 100%), radial-gradient(circle 30px at 15% 15%, white 99%, transparent 100%), radial-gradient(circle 15px at 80% 80%, white 99%, transparent 100%); background-size: 200px 200px; } body.style-cute .container { border: 5px solid #FFF; box-shadow: 0 10px 0 rgba(255,255,255,0.3); }
+        body.style-print { --bg: #EFE6DD; --card: #FDFBF7; --primary: #2C2C2C; --text: #2C2C2C; --border: #2C2C2C; --radius: 4px; --font: serif; } body.style-print .container { border-width: 3px; background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjRkRGQkY3Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNDQ0MiLz4KPC9zdmc+'); } body.style-print .word-card { box-shadow: 4px 4px 0 #2C2C2C; border-width: 2px; }
+        body.style-icon { --bg: #f0f0f0; --card: #fff; --primary: #6200EA; --text: #000; --border: #E0E0E0; --radius: 8px; --font: monospace; background-image: linear-gradient(#ccc 1px, transparent 1px), linear-gradient(90deg, #ccc 1px, transparent 1px); background-size: 20px 20px; } body.style-icon .word-card { border: 2px solid #6200EA; color: #6200EA; background: #EDE7F6; }
+        body.style-hybrid { --bg: #eee; --card: #fff; --primary: #1565C0; --text: #333; --border: #90CAF9; --radius: 2px; --font: cursive; background-color: #f4f3f2; } body.style-hybrid .container { background-image: linear-gradient(#e1e1e1 1px, transparent 1px); background-size: 100% 1.5em; border-left: 5px double #ef5350; padding-left: 40px; } body.style-hybrid .word-card { font-family: 'Microsoft JhengHei', sans-serif; transform: rotate(-1deg); box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        body.style-chalk { --bg: #2B3A2E; --card: #344838; --primary: #D84315; --text: #EEE; --border: #EEE; --radius: 5px; --font: sans-serif; background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+CjxmaWx0ZXIgaWQ9Im4iPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSI1IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+CjxyZWN0IHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgZmlsbD0idHJhbnNwYXJlbnQiLz4KPC9zdmc+'); } body.style-chalk .container { border: 8px solid #5D4037; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); } body.style-chalk .word-card { background: transparent; border: 2px dashed rgba(255,255,255,0.6); color: #fff; } body.style-chalk input, body.style-chalk textarea { background: rgba(255,255,255,0.1); color: white; border-color: #777; }
+        
+        .hidden { display: none !important; }
+        .stamp { position: absolute; right: 20px; bottom: 20px; font-size: 40px; border: 3px solid #D32F2F; color: #D32F2F; padding: 15px; transform: rotate(-15deg); border-radius: 50%; opacity: 0.8; font-weight: bold; background: rgba(255,255,255,0.8); }
+        #loading-mask { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; display:flex; justify-content:center; align-items:center; color:white; font-size:20px; }
+    </style>
+</head>
+<body class="style-morandi">
+
+    <div id="loading-mask" class="hidden">🔄 圖片處理中...</div>
+    <div class="footer-credit">Designed by <span>台師大吳穎純老師</span> | Powered by AI Tool</div>
+
+    <h1 id="page-title">🎧 華語聽力 V9</h1>
+
+    <div id="teacher-setup" class="container">
+        <h2>🎨 老師出題 (完全體)</h2>
+        
+        <div class="instruction-box">
+            <b>1. 圖片上傳：</b> 您可以點選「📂 選擇檔案」上傳電腦裡的圖片作為標題圖（會自動壓縮）。<br>
+            <b>2. 破音字修正：</b> 如果電腦念錯音，請用 <span class="code-tag">{顯示字|同音字}</span>。<br>
+            例如：輸入 <span class="code-tag">我覺{得|的}好</span>，卡片會顯示「得」，但電腦念「的」。
+        </div>
+
+        <label>1. 選擇主題風格</label>
+        <select id="input-style" onchange="previewStyle()">
+            <option value="style-morandi">1. 莫蘭迪 Morandi</option>
+            <option value="style-watercolor">2. 水彩暈染 Watercolor</option>
+            <option value="style-flat">3. 扁平插畫 Pop Art</option>
+            <option value="style-geometric">4. 幾何科技 Cyber</option>
+            <option value="style-scene">5. 咖啡木紋 Wood</option>
+            <option value="style-cute">6. 天空雲朵 Sky</option>
+            <option value="style-print">7. 復古雜點 Retro</option>
+            <option value="style-icon">8. 方格筆記 Grid</option>
+            <option value="style-hybrid">9. 橫線筆記 Notebook</option>
+            <option value="style-chalk">10. 教室黑板 Chalkboard</option>
+        </select>
+
+        <label>2. 作業標題</label>
+        <input type="text" id="input-title" placeholder="例如：第五課 聽力測驗">
+        
+        <label>3. 頁首圖片 (支援上傳)</label>
+        <div class="img-control-row">
+            <button class="btn btn-upload" onclick="document.getElementById('file-header').click()">📂 選擇檔案</button>
+            <input type="file" id="file-header" accept="image/*" style="display:none" onchange="handleFileUpload(this)">
+            <span style="font-size:14px; color:#666;">或</span>
+            <input type="text" id="input-img" style="flex:1;" placeholder="貼上圖片網址...">
+            <img id="preview-header" class="preview-thumb">
+        </div>
+
+        <label>4. 輸入題目 (一行一題，用 / 切割)</label>
+        <textarea id="input-sentences" placeholder="範例：&#10;我/覺{得|的}/很/開{心|新}/。&#10;今天/天氣/真/不錯/。"></textarea>
+
+        <button class="btn" onclick="generateLink()">✨ 產生作業連結</button>
+
+        <div id="result-box" class="hidden" style="margin-top:20px; padding:15px; border:1px solid var(--border); background: rgba(255,255,255,0.5);">
+            <p>✅ 網址已生成：</p>
+            <textarea id="generated-link" style="height:60px; font-size:12px;" readonly></textarea>
+            <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn" onclick="copyLink()">📋 複製網址</button>
+                <button class="btn btn-tiny" onclick="tryAutoShorten()">🪄 自動縮短 (TinyURL)</button>
+                <button class="btn" onclick="testPlay()">🎮 試玩</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="student-login" class="container hidden" style="text-align:center;">
+        <img id="login-img" class="hidden" src="" style="max-height:150px; margin-bottom:15px; border-radius:var(--radius);">
+        <h2 id="login-title">準備開始</h2>
+        <input type="text" id="student-name" placeholder="請輸入名字" style="text-align:center; font-size:18px;">
+        <br><br>
+        <button class="btn" onclick="startQuiz()">🚀 開始挑戰</button>
+    </div>
+
+    <div id="game-area" class="container hidden">
+        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <span id="display-name"></span>
+            <span>第 <span id="current-q">1</span> / <span id="total-q">1</span> 題</span>
+        </div>
+        <hr style="border-top: 1px solid var(--border); margin: 15px 0;">
+        <img id="game-header-img" class="hidden" src="" style="max-height:120px; display:block; margin:0 auto;">
+        
+        <div style="text-align:center; margin: 20px 0;">
+            <button class="btn" onclick="playAudio(1)">🔊 播放</button>
+            <button class="btn" style="opacity:0.8; font-size:14px;" onclick="playAudio(0.7)">🐢 慢速</button>
+        </div>
+
+        <div class="word-container" id="sortable-list"></div>
+        <div id="feedback" style="text-align:center; font-weight:bold; height:30px; margin:10px;"></div>
+
+        <div style="text-align:center;">
+            <button class="btn" onclick="checkAnswer()">✅ 檢查</button>
+            <button id="next-btn" class="btn hidden" onclick="nextQuestion()">👉 下一題</button>
+        </div>
+    </div>
+
+    <div id="result-area" class="container hidden" style="text-align:center;">
+        <div style="font-size:80px; margin-bottom:10px;">🏆</div>
+        <h2>恭喜完成！</h2>
+        <h3 id="result-title-display"></h3>
+        <p>姓名：<strong id="result-name" style="font-size:24px;"></strong></p>
+        <div style="font-size:60px; font-weight:bold; color:var(--primary); margin:20px;">
+            <span id="final-score">100</span> <span style="font-size:20px;">分</span>
+        </div>
+        <p>日期：<span id="finish-date"></span></p>
+        <div class="stamp">Excellent!</div>
+        <p style="color:var(--primary); font-size:14px;">(請截圖回傳)</p>
+    </div>
+
+    <script>
+        let questions = [], currentIdx = 0, score = 0, studentName = "";
+        let settings = { title: "聽力練習", style: "style-morandi", img: "" };
+        let sortableInstance = null;
+        const correctSound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/success.mp3');
+        const victorySound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/victory.mp3');
+
+        // --- 核心：糾音解析器 ---
+        function getSpeechText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$2'); }
+        function getDisplayText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$1'); }
+
+        // --- 圖片處理 ---
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if(!file) return;
+            document.getElementById('loading-mask').classList.remove('hidden');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxWidth = 400; // 標題圖稍微大一點
+                    const scale = maxWidth / img.width;
+                    canvas.width = maxWidth; canvas.height = img.height * scale;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.6);
+                    document.getElementById('input-img').value = compressedData;
+                    const thumb = document.getElementById('preview-header');
+                    thumb.src = compressedData; thumb.style.display = "block";
+                    document.getElementById('loading-mask').classList.add('hidden');
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function previewStyle() { document.body.className = document.getElementById('input-style').value; }
+
+        function generateLink() {
+            const raw = document.getElementById('input-sentences').value.trim();
+            if(!raw) return alert("請輸入題目");
+            
+            const qList = raw.split('\n').filter(l=>l.trim()).map(l => {
+                const chunks = l.split('/').map(w=>w.trim()).filter(w=>w);
+                return chunks.length ? { full: chunks.join(""), words: chunks } : null;
+            }).filter(x=>x);
+
+            const pack = {
+                s: {
+                    title: document.getElementById('input-title').value.trim() || "聽力練習",
+                    style: document.getElementById('input-style').value,
+                    img: document.getElementById('input-img').value.trim()
+                },
+                q: qList
+            };
+            
+            if (typeof LZString === 'undefined') return alert("系統載入中...");
+            const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(pack));
+            const url = `${window.location.href.split('?')[0]}?data=${compressed}`;
+            
+            document.getElementById('result-box').classList.remove('hidden');
+            document.getElementById('generated-link').value = url;
+        }
+
+        function tryAutoShorten() {
+            const longUrl = document.getElementById('generated-link').value;
+            if(!longUrl) return;
+            const btn = document.querySelector('.btn-tiny');
+            btn.innerText = "⏳ 處理中..."; btn.disabled = true;
+            fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl))
+            .then(res => res.ok ? res.text() : null)
+            .then(shortUrl => {
+                if(shortUrl) {
+                    document.getElementById('generated-link').value = shortUrl;
+                    btn.innerText = "✅ 成功";
+                } else throw new Error();
+            })
+            .catch(() => {
+                btn.innerText = "❌ 失敗";
+                if(confirm("自動縮網址失敗，是否手動開啟 TinyURL？")) {
+                    copyLink(); window.open("https://tinyurl.com/app", "_blank");
+                }
+            });
+        }
+
+        function copyLink() {
+            document.getElementById('generated-link').select();
+            document.execCommand('copy');
+            alert("已複製");
+        }
+        function testPlay() { window.location.href = document.getElementById('generated-link').value; }
+
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const data = params.get('data');
+            if(data) {
+                try {
+                    const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(data));
+                    questions = decoded.q;
+                    if(decoded.s) settings = decoded.s;
+                    enterStudentMode();
+                } catch(e) { console.error(e); }
+            } else {
+                document.getElementById('teacher-setup').classList.remove('hidden');
+                previewStyle();
+            }
+        }
+
+        function enterStudentMode() {
+            document.getElementById('teacher-setup').classList.add('hidden');
+            document.getElementById('student-login').classList.remove('hidden');
+            document.body.className = settings.style;
+            document.getElementById('page-title').innerText = settings.title;
+            document.getElementById('login-title').innerText = settings.title;
+            if(settings.img) {
+                document.getElementById('login-img').src = settings.img;
+                document.getElementById('login-img').classList.remove('hidden');
+                document.getElementById('game-header-img').src = settings.img;
+            }
+        }
+
+        function startQuiz() {
+            const n = document.getElementById('student-name').value.trim();
+            if(!n) return alert("請輸入名字");
+            studentName = n;
+            document.getElementById('student-login').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            document.getElementById('display-name').innerText = n;
+            if(settings.img) document.getElementById('game-header-img').classList.remove('hidden');
+            currentIdx = 0; score = 0; loadQuestion();
+        }
+
+        function loadQuestion() {
+            document.getElementById('current-q').innerText = currentIdx+1;
+            document.getElementById('total-q').innerText = questions.length;
+            const list = document.getElementById('sortable-list');
+            list.innerHTML = "";
+            document.getElementById('feedback').innerText = "";
+            document.getElementById('next-btn').classList.add('hidden');
+
+            let words = [...questions[currentIdx].words].sort(()=>Math.random()-0.5);
+            words.forEach(w => {
+                const div = document.createElement('div');
+                div.className = 'word-card';
+                // 關鍵：顯示時使用 getDisplayText 去掉糾音符號
+                div.innerText = getDisplayText(w);
+                // 保存原始文字(含糾音)在 dataset 以便檢查答案
+                div.dataset.raw = w;
+                list.appendChild(div);
+            });
+
+            if(sortableInstance) sortableInstance.destroy();
+            sortableInstance = new Sortable(list, { animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag' });
+        }
+
+        function playAudio(rate) {
+            window.speechSynthesis.cancel();
+            // 關鍵：播放時使用 getSpeechText 取得讀音
+            const textToRead = getSpeechText(questions[currentIdx].full);
+            const u = new SpeechSynthesisUtterance(textToRead);
+            u.lang = 'zh-TW'; u.rate = rate;
+            window.speechSynthesis.speak(u);
+        }
+
+        let tried = false;
+        function checkAnswer() {
+            if(!document.getElementById('next-btn').classList.contains('hidden')) return;
+            // 檢查答案時，要把卡片裡的 dataset.raw 拼起來比對原始句子
+            const ans = [...document.querySelectorAll('.word-card')].map(x=>x.dataset.raw).join("");
+            const fb = document.getElementById('feedback');
+            
+            if(ans === questions[currentIdx].full) {
+                fb.innerText = "🎉 答對了！"; fb.style.color = "green";
+                correctSound.currentTime = 0; correctSound.play();
+                if(!tried) score++;
+                document.getElementById('next-btn').classList.remove('hidden');
+                sortableInstance.option("disabled", true);
+            } else {
+                fb.innerText = "❌ 再試試看"; fb.style.color = "red";
+                tried = true;
+            }
+        }
+
+        function nextQuestion() {
+            currentIdx++; tried = false;
+            if(currentIdx < questions.length) loadQuestion();
+            else {
+                document.getElementById('game-area').classList.add('hidden');
+                document.getElementById('result-area').classList.remove('hidden');
+                document.getElementById('result-title-display').innerText = settings.title;
+                document.getElementById('result-name').innerText = studentName;
+                document.getElementById('final-score').innerText = Math.round((score/questions.length)*100);
+                const d = new Date();
+                document.getElementById('finish-date').innerText = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+                victorySound.play();
+                launchConfetti();
+            }
+        }
+
+        function launchConfetti() {
+            var duration = 3000; var end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雙人對話聽力 V2.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 基礎設定 --- */
+        :root { --bg: #f4f4f4; --card: #fff; --primary: #555; --text: #333; --border: #ccc; --radius: 12px; --font: 'Microsoft JhengHei', sans-serif; }
+        body { margin: 0; padding: 20px; padding-bottom: 60px; font-family: var(--font); background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; transition: 0.3s; }
+        
+        .container { 
+            background: var(--card); padding: 30px; width: 95%; max-width: 800px; 
+            border-radius: var(--radius); border: 2px solid var(--border); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative;
+        }
+
+        .btn { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-size: 15px; margin: 5px; font-family: inherit; transition: 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+        .btn:active { transform: translateY(3px); box-shadow: none; }
+        .btn:hover { filter: brightness(1.1); }
+        .btn-add { background: #4CAF50; }
+        .btn-del { background: #E57373; padding: 5px 10px; font-size: 12px; margin-left: 5px;}
+        
+        input[type="text"], textarea, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 15px; font-family: inherit; }
+
+        /* --- 出題區塊 --- */
+        .q-block { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed var(--border); }
+        .q-block h3 { margin: 0 0 10px 0; color: var(--primary); border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 5px; }
+        
+        /* 對話腳本樣式 */
+        .script-row { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
+        .role-select { width: 80px; background: #e0f7fa; border-color: #00acc1; color: #006064; font-weight: bold; }
+        .role-select.female { background: #fce4ec; border-color: #ec407a; color: #880e4f; }
+        .line-input { flex: 1; }
+
+        .label-text { font-weight: bold; font-size: 14px; color: #666; margin-top: 15px; display: block; }
+        .option-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
+
+        /* --- 學生答題區 --- */
+        .audio-box { text-align: center; background: rgba(0,0,0,0.05); padding: 20px; border-radius: var(--radius); margin-bottom: 20px; }
+        .status-text { font-size: 14px; color: #666; margin-bottom: 10px; min-height: 20px;}
+        
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; margin-top: 10px; }
+        .option-btn { background: #fff; border: 2px solid var(--primary); color: var(--text); padding: 15px; border-radius: 10px; font-size: 18px; cursor: pointer; transition: 0.2s; text-align: left; display: flex; align-items: center; }
+        .option-btn:hover { background: rgba(0,0,0,0.05); transform: translateX(5px); }
+        .option-btn .abc { font-weight: bold; margin-right: 15px; background: var(--primary); color: #fff; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        
+        .option-btn.correct { background: #C8E6C9; border-color: #4CAF50; }
+        .option-btn.correct .abc { background: #4CAF50; }
+        .option-btn.wrong { background: #FFCDD2; border-color: #F44336; }
+        .option-btn.wrong .abc { background: #F44336; }
+
+        /* --- 署名頁尾 --- */
+        .footer-credit { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); text-align: center; padding: 10px 0; font-size: 14px; color: #666; border-top: 1px solid #ddd; z-index: 999; }
+        .footer-credit span { font-weight: bold; color: #333; }
+
+        /* --- 五大風格 --- */
+        body.style-morandi { --bg: #D8E2DC; --card: #F9F7F2; --primary: #9D8189; --text: #6D6875; --border: #B5B2BE; --radius: 12px; }
+        body.style-wood { --bg: #EFEBE9; --card: #FFF3E0; --primary: #8D6E63; --text: #3E2723; --border: #D7CCC8; --radius: 8px; background-image: repeating-linear-gradient(45deg, #EFEBE9 0, #EFEBE9 10px, #D7CCC8 10px, #D7CCC8 12px); }
+        body.style-tech { --bg: #ECEFF1; --card: #FFF; --primary: #0097A7; --text: #37474F; --border: #B2EBF2; --radius: 4px; }
+        body.style-sky { --bg: #E1F5FE; --card: #FFF; --primary: #4FC3F7; --text: #0277BD; --border: #B3E5FC; --radius: 20px; background-image: radial-gradient(#FFF 20%, transparent 20%); background-size: 20px 20px; }
+        body.style-chalk { --bg: #263238; --card: #37474F; --primary: #FFCC80; --text: #FFF; --border: #546E7A; --radius: 6px; }
+        body.style-chalk input, body.style-chalk textarea { background: #455A64; color: white; border: 1px solid #78909C; }
+        body.style-chalk .option-btn { background: transparent; color: white; border-color: #FFCC80; }
+
+        .hidden { display: none !important; }
+        .stamp { position: absolute; right: 20px; bottom: 20px; font-size: 40px; border: 3px solid #D32F2F; color: #D32F2F; padding: 15px; transform: rotate(-15deg); border-radius: 50%; opacity: 0.8; font-weight: bold; background: rgba(255,255,255,0.8); }
+        
+        /* 對話中高亮 */
+        .playing-icon { color: #f44336; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="style-morandi">
+
+    <div class="footer-credit">Designed by <span>台師大吳穎純老師</span> | Powered by AI Tool</div>
+
+    <h1 id="page-title">🎧 雙人對話聽力 V2</h1>
+
+    <div id="teacher-setup" class="container">
+        <h2 style="border-bottom: 2px solid var(--border); padding-bottom: 10px;">✏️ 老師出題 (變聲版)</h2>
+        
+        <label>1. 選擇風格</label>
+        <select id="input-style" onchange="previewStyle()">
+            <option value="style-morandi">1. 莫蘭迪 Morandi</option>
+            <option value="style-wood">2. 溫暖木質 Wood</option>
+            <option value="style-tech">3. 科技藍調 Tech</option>
+            <option value="style-sky">4. 可愛天空 Sky</option>
+            <option value="style-chalk">5. 教室黑板 Chalkboard</option>
+        </select>
+
+        <label>2. 作業標題</label>
+        <input type="text" id="input-title" placeholder="例如：第三課 雙人對話練習">
+
+        <hr style="border:0; border-top:1px dashed var(--border); margin:20px 0;">
+        
+        <div id="questions-wrapper"></div>
+        
+        <button class="btn btn-add" onclick="addQuestion()">+ 增加一題</button>
+        <span style="font-size:12px; color:#888;">(最多10題)</span>
+        <br><br>
+
+        <button class="btn" onclick="generateLink()">✨ 產生作業連結</button>
+
+        <div id="result-box" class="hidden" style="margin-top:20px; padding:15px; border:1px solid var(--border); background: rgba(255,255,255,0.5);">
+            <p>✅ 網址已生成：</p>
+            <textarea id="generated-link" style="height:60px; font-size:12px;" readonly></textarea>
+            <button class="btn" onclick="copyLink()">📋 複製網址</button>
+            <button class="btn" onclick="testPlay()">🎮 試玩</button>
+        </div>
+    </div>
+
+    <div id="student-login" class="container hidden" style="text-align:center;">
+        <h2 id="login-title">準備開始</h2>
+        <p>請輸入名字：</p>
+        <input type="text" id="student-name" placeholder="Name" style="text-align:center; font-size:18px;">
+        <br><br>
+        <button class="btn" onclick="startQuiz()">🚀 開始測驗</button>
+    </div>
+
+    <div id="game-area" class="container hidden">
+        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <span id="display-name"></span>
+            <span>第 <span id="current-q">1</span> / <span id="total-q">10</span> 題</span>
+        </div>
+        <hr style="border-top: 1px solid var(--border); margin: 15px 0;">
+
+        <div class="audio-box">
+            <div style="font-size:50px; margin-bottom:10px;">🔊</div>
+            <div id="status-text" class="status-text">點擊按鈕開始播放</div>
+            
+            <button id="play-btn" class="btn" onclick="playDialogue()">▶️ 播放對話</button>
+        </div>
+
+        <p style="text-align:center; font-size:14px; color:#666;">請選出正確答案：</p>
+        <div class="options-grid" id="options-area"></div>
+        <div id="feedback" style="text-align:center; height:30px; margin-top:10px; font-weight:bold;"></div>
+    </div>
+
+    <div id="result-area" class="container hidden" style="text-align:center;">
+        <div style="font-size:80px; margin-bottom:10px;">🏆</div>
+        <h2>完成測驗！</h2>
+        <h3 id="result-title-display"></h3>
+        <p>姓名：<strong id="result-name" style="font-size:24px;"></strong></p>
+        <div style="font-size:60px; font-weight:bold; color:var(--primary); margin:20px;">
+            <span id="final-score">100</span> <span style="font-size:20px;">分</span>
+        </div>
+        <p>日期：<span id="finish-date"></span></p>
+        <div class="stamp">台師大認證</div>
+        <p style="color:var(--primary); font-size:14px;">(請截圖回傳)</p>
+    </div>
+
+    <script>
+        const maxQuestions = 10;
+        let questionCount = 0;
+        let questionsData = [];
+        let currentIdx = 0;
+        let score = 0;
+        let studentName = "";
+        let settings = { title: "對話聽力", style: "style-morandi" };
+        
+        const correctSound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/success.mp3');
+        const victorySound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/victory.mp3');
+
+        // --- 1. 出題邏輯：對話腳本 ---
+        function addQuestion() {
+            if (questionCount >= maxQuestions) return alert("最多 10 題！");
+            questionCount++;
+            
+            const wrapper = document.getElementById('questions-wrapper');
+            const div = document.createElement('div');
+            div.className = 'q-block';
+            div.id = `q-block-${questionCount}`;
+            div.innerHTML = `
+                <h3>第 ${questionCount} 題</h3>
+                
+                <span class="label-text">對話腳本 (請一句一句新增)：</span>
+                <div class="script-container" id="script-container-${questionCount}">
+                    </div>
+                <button class="btn btn-add" style="font-size:12px; padding:5px 10px;" onclick="addScriptLine(${questionCount})">+ 增加一句</button>
+                
+                <span class="label-text">問題 (語音唸出)：</span>
+                <input type="text" class="input-question" placeholder="例如：請問男生覺得怎麼樣？">
+                
+                <span class="label-text">選項與答案：</span>
+                <div class="option-row"><input type="radio" name="q${questionCount}" value="0" checked> <input type="text" class="opt-0" placeholder="選項 A"></div>
+                <div class="option-row"><input type="radio" name="q${questionCount}" value="1"> <input type="text" class="opt-1" placeholder="選項 B"></div>
+                <div class="option-row"><input type="radio" name="q${questionCount}" value="2"> <input type="text" class="opt-2" placeholder="選項 C"></div>
+                <div class="option-row"><input type="radio" name="q${questionCount}" value="3"> <input type="text" class="opt-3" placeholder="選項 D"></div>
+            `;
+            wrapper.appendChild(div);
+            // 預設加兩行對話
+            addScriptLine(questionCount);
+            addScriptLine(questionCount);
+        }
+
+        function addScriptLine(qId) {
+            const container = document.getElementById(`script-container-${qId}`);
+            const div = document.createElement('div');
+            div.className = 'script-row';
+            div.innerHTML = `
+                <select class="role-select" onchange="changeRoleColor(this)">
+                    <option value="m">男聲</option>
+                    <option value="f">女聲</option>
+                </select>
+                <input type="text" class="line-input" placeholder="輸入台詞...">
+                <button class="btn btn-del" onclick="this.parentElement.remove()">x</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function changeRoleColor(select) {
+            if(select.value === 'f') select.classList.add('female');
+            else select.classList.remove('female');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if(!window.location.search.includes('data=')) addQuestion();
+            checkUrlData();
+        });
+
+        function previewStyle() { document.body.className = document.getElementById('input-style').value; }
+
+        // --- 2. 打包資料 ---
+        function generateLink() {
+            const title = document.getElementById('input-title').value.trim() || "聽力測驗";
+            const style = document.getElementById('input-style').value;
+            const qBlocks = document.querySelectorAll('.q-block');
+            
+            let qList = [];
+            qBlocks.forEach((block, idx) => {
+                // 抓取對話腳本
+                const scriptRows = block.querySelectorAll('.script-row');
+                let dialogue = [];
+                scriptRows.forEach(row => {
+                    const role = row.querySelector('.role-select').value;
+                    const text = row.querySelector('.line-input').value.trim();
+                    if(text) dialogue.push({r: role, t: text});
+                });
+
+                const question = block.querySelector('.input-question').value.trim();
+                const opts = [
+                    block.querySelector('.opt-0').value.trim(),
+                    block.querySelector('.opt-1').value.trim(),
+                    block.querySelector('.opt-2').value.trim(),
+                    block.querySelector('.opt-3').value.trim()
+                ];
+                const correct = block.querySelector(`input[name="q${idx+1}"]:checked`).value;
+
+                if (dialogue.length > 0 && opts[0] && opts[1]) {
+                    qList.push({ d: dialogue, q: question, o: opts, a: parseInt(correct) });
+                }
+            });
+
+            if (qList.length < 1) return alert("請至少完整輸入一題");
+
+            const pack = { s: { title, style }, q: qList };
+            const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(pack));
+            const url = `${window.location.href.split('?')[0]}?data=${compressed}`;
+            
+            document.getElementById('result-box').classList.remove('hidden');
+            document.getElementById('generated-link').value = url;
+        }
+
+        function copyLink() {
+            document.getElementById('generated-link').select();
+            document.execCommand('copy');
+            alert("已複製");
+        }
+        function testPlay() { window.location.href = document.getElementById('generated-link').value; }
+
+        // --- 3. 學生端與語音播放 (核心變聲邏輯) ---
+        function checkUrlData() {
+            const params = new URLSearchParams(window.location.search);
+            const data = params.get('data');
+            if (data) {
+                try {
+                    const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(data));
+                    questionsData = decoded.q;
+                    settings = decoded.s;
+                    enterStudentMode();
+                } catch (e) { console.error(e); }
+            } else {
+                document.getElementById('teacher-setup').classList.remove('hidden');
+                previewStyle();
+            }
+        }
+
+        function enterStudentMode() {
+            document.getElementById('teacher-setup').classList.add('hidden');
+            document.getElementById('student-login').classList.remove('hidden');
+            document.body.className = settings.style;
+            document.getElementById('login-title').innerText = settings.title;
+        }
+
+        function startQuiz() {
+            const n = document.getElementById('student-name').value.trim();
+            if (!n) return alert("請輸入名字");
+            studentName = n;
+            document.getElementById('student-login').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            document.getElementById('display-name').innerText = n;
+            document.getElementById('total-q').innerText = questionsData.length;
+            
+            currentIdx = 0; score = 0;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentIdx >= questionsData.length) {
+                showResult();
+                return;
+            }
+            document.getElementById('current-q').innerText = currentIdx + 1;
+            const q = questionsData[currentIdx];
+            
+            // 重置介面
+            const area = document.getElementById('options-area');
+            area.innerHTML = "";
+            document.getElementById('feedback').innerText = "";
+            document.getElementById('status-text').innerText = "點擊按鈕開始播放";
+            document.getElementById('play-btn').disabled = false;
+            
+            const labels = ["A", "B", "C", "D"];
+            q.o.forEach((optText, idx) => {
+                if(!optText) return; 
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `<span class="abc">${labels[idx]}</span> ${optText}`;
+                btn.onclick = () => checkAnswer(idx, btn);
+                area.appendChild(btn);
+            });
+        }
+
+        // --- 核心：對話播放器 (序列播放) ---
+        let isPlaying = false;
+        
+        async function playDialogue() {
+            if(isPlaying) return;
+            isPlaying = true;
+            document.getElementById('play-btn').disabled = true;
+            
+            const q = questionsData[currentIdx];
+            const status = document.getElementById('status-text');
+            window.speechSynthesis.cancel();
+
+            // 1. 播放每一句對話
+            for (let i = 0; i < q.d.length; i++) {
+                const line = q.d[i];
+                status.innerText = line.r === 'm' ? "🔊 男聲說話中..." : "🔊 女聲說話中...";
+                await speakPromise(line.t, line.r);
+                // 句與句之間的小停頓
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            // 2. 停頓一秒
+            status.innerText = "...";
+            await new Promise(r => setTimeout(r, 1000));
+
+            // 3. 播放問題
+            status.innerText = "🔊 請問...";
+            await speakPromise("請問：" + q.q, 'f'); // 問題通常用正常聲音唸
+            
+            status.innerText = "請作答";
+            isPlaying = false;
+            document.getElementById('play-btn').disabled = false;
+        }
+
+        function speakPromise(text, role) {
+            return new Promise((resolve) => {
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'zh-TW';
+                
+                // --- 變聲器邏輯 ---
+                if (role === 'm') {
+                    u.pitch = 0.7; // 壓低音調 (男聲)
+                    u.rate = 0.9;  // 稍微放慢
+                } else {
+                    u.pitch = 1.1; // 稍微拉高 (女聲)
+                    u.rate = 1.0;
+                }
+                
+                u.onend = resolve;
+                window.speechSynthesis.speak(u);
+            });
+        }
+
+        let isAnswered = false;
+        function checkAnswer(selectedIdx, btnElement) {
+            if (isAnswered || isPlaying) return;
+            
+            const q = questionsData[currentIdx];
+            const isCorrect = (selectedIdx === q.a);
+            const feedback = document.getElementById('feedback');
+            const allBtns = document.querySelectorAll('.option-btn');
+
+            isAnswered = true;
+
+            if (isCorrect) {
+                btnElement.classList.add('correct');
+                feedback.innerText = "🎉 答對了！";
+                feedback.style.color = "green";
+                score++;
+                correctSound.currentTime = 0;
+                correctSound.play();
+            } else {
+                btnElement.classList.add('wrong');
+                feedback.innerText = "❌ 答錯了！";
+                feedback.style.color = "red";
+                allBtns[q.a].classList.add('correct');
+            }
+
+            setTimeout(() => {
+                currentIdx++;
+                isAnswered = false;
+                loadQuestion();
+            }, 2500);
+        }
+
+        function showResult() {
+            document.getElementById('game-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+            document.getElementById('result-title-display').innerText = settings.title;
+            document.getElementById('result-name').innerText = studentName;
+            document.getElementById('final-score').innerText = Math.round((score / questionsData.length) * 100);
+            const d = new Date();
+            document.getElementById('finish-date').innerText = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+            victorySound.play();
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        }
+    </script>
+</body>
+</html>

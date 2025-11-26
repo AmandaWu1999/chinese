@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雙人對話聽力 V7.0</title>
+    <title>雙人對話聽力 V8.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
@@ -17,6 +17,9 @@
         .btn:active { transform: translateY(3px); box-shadow: none; } .btn:hover { filter: brightness(1.1); }
         .btn-add { background: #4CAF50; } .btn-del { background: #E57373; padding: 5px 10px; font-size: 12px; margin-left: 5px;}
         .btn-test { background: #607D8B; font-size: 14px; }
+        /* 新增：單題試聽按鈕樣式 */
+        .btn-preview { background: #FF9800; font-size: 14px; width: 100%; margin-top: 10px; border-radius: 8px; }
+        
         input[type="text"], textarea, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 15px; font-family: inherit; }
 
         /* --- 提示區 --- */
@@ -25,14 +28,11 @@
         .role-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; color: white; margin: 0 2px; }
 
         /* 出題區 */
-        .q-block { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed var(--border); }
+        .q-block { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed var(--border); position: relative; }
         .script-row { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
-        
-        /* 角色選擇器 */
-        .role-select { width: 140px; font-weight: bold; border-width: 2px; } /* 加寬一點 */
+        .role-select { width: 140px; font-weight: bold; border-width: 2px; }
         .role-select.role-a { background: #E8EAF6; border-color: #3F51B5; color: #1A237E; }
         .role-select.role-b { background: #FFF3E0; border-color: #FF9800; color: #E65100; }
-        
         .line-input { flex: 1; }
         .label-text { font-weight: bold; font-size: 14px; color: #666; margin-top: 15px; display: block; }
         .option-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
@@ -66,25 +66,18 @@
 
     <div class="footer-credit">Designed by <span>台師大吳穎純老師</span> | Powered by AI Tool</div>
 
-    <h1 id="page-title">🎧 雙人對話聽力 V7</h1>
+    <h1 id="page-title">🎧 雙人對話聽力 V8</h1>
 
     <div id="teacher-setup" class="container">
         <h2>✏️ 老師出題</h2>
         
         <div class="instruction-box">
-            <h3>📖 聲音與角色說明：</h3>
+            <h3>📖 老師使用指引：</h3>
             <ul>
-                <li><b>角色分配：</b> 
-                    <span class="role-badge" style="background:#3F51B5;">角色 A</span> 為「低沉音」（適合模擬男聲/長輩）；
-                    <span class="role-badge" style="background:#FF9800;">角色 B</span> 為「高亢音」（適合模擬女聲/小孩）。
-                </li>
-                <li><b>聲音測試：</b> 請先點選下方按鈕試聽，確認效果。</li>
-                <li><b>破音字修正：</b> 請用 <span class="code-tag">{顯示|讀音}</span>。例如：<span class="code-tag">我要去銀{行|航}</span>。</li>
+                <li><b>🎧 單題試聽：</b> 請利用每題下方的 <span class="role-badge" style="background:#FF9800;">🔊 試聽本題</span> 按鈕。如果發現電腦唸錯字，請立刻修正。</li>
+                <li><b>💡 破音字修正：</b> 使用 <span class="code-tag">{顯示字|讀音字}</span>。例如：<span class="code-tag">這很重{要|耀}</span>。</li>
+                <li><b>角色分配：</b> <span class="role-badge" style="background:#3F51B5;">角色 A (低沉)</span> / <span class="role-badge" style="background:#FF9800;">角色 B (高亢)</span>。</li>
             </ul>
-        </div>
-
-        <div style="text-align:center; margin-bottom:20px;">
-            <button class="btn btn-test" onclick="testVoices()">🔊 試聽 A 與 B 的聲音</button>
         </div>
 
         <label>1. 選擇風格</label>
@@ -165,35 +158,25 @@
         function getSpeechText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$2'); }
         function getDisplayText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$1'); }
 
-        // 新增：聲音測試 (配合新的說明)
-        function testVoices() {
-            window.speechSynthesis.cancel();
-            const u1 = new SpeechSynthesisUtterance("你好，我是角色B，這是高亢音。");
-            u1.lang = 'zh-TW'; u1.rate = 1.0; u1.pitch = 1.0; 
-            
-            u1.onend = function() {
-                const u2 = new SpeechSynthesisUtterance("你好，我是角色A，這是低沉音。");
-                u2.lang = 'zh-TW'; u2.rate = 0.95; u2.pitch = 0.85; 
-                const voices = window.speechSynthesis.getVoices().filter(v => v.lang.includes('zh') || v.lang.includes('CN') || v.lang.includes('TW'));
-                if(voices.length > 1) u2.voice = voices[1];
-                window.speechSynthesis.speak(u2);
-            };
-            window.speechSynthesis.speak(u1);
-        }
-
+        // --- 1. 出題邏輯 (含試聽功能) ---
         function addQuestion() {
             if (questionCount >= maxQuestions) return alert("最多 10 題！");
             questionCount++;
             const wrapper = document.getElementById('questions-wrapper');
             const div = document.createElement('div');
             div.className = 'q-block';
+            div.id = `q-block-${questionCount}`; // 增加 ID 以便抓取資料
             div.innerHTML = `
                 <h3>第 ${questionCount} 題</h3>
                 <span class="label-text">對話腳本：</span>
                 <div class="script-container" id="script-container-${questionCount}"></div>
                 <button class="btn btn-add" style="font-size:12px; padding:5px 10px;" onclick="addScriptLine(${questionCount})">+ 增加一句</button>
+                
                 <span class="label-text">問題：</span>
                 <input type="text" class="input-question" placeholder="例如：請問角色 A 覺得怎麼樣？">
+                
+                <button class="btn btn-preview" onclick="previewQuestion(${questionCount})">🔊 試聽本題 (確認發音)</button>
+
                 <span class="label-text">選項：</span>
                 <div class="option-row"><input type="radio" name="q${questionCount}" value="0" checked> <input type="text" class="opt-0" placeholder="選項 A"></div>
                 <div class="option-row"><input type="radio" name="q${questionCount}" value="1"> <input type="text" class="opt-1" placeholder="選項 B"></div>
@@ -204,11 +187,38 @@
             addScriptLine(questionCount); addScriptLine(questionCount);
         }
 
+        // --- 新增：預覽該題邏輯 ---
+        async function previewQuestion(qId) {
+            const block = document.getElementById(`q-block-${qId}`);
+            const scriptRows = block.querySelectorAll('.script-row');
+            const questionText = block.querySelector('.input-question').value.trim();
+            
+            // 停止正在播放的聲音
+            window.speechSynthesis.cancel();
+
+            // 讀取腳本
+            for (let i = 0; i < scriptRows.length; i++) {
+                const row = scriptRows[i];
+                const role = row.querySelector('.role-select').value;
+                const text = row.querySelector('.line-input').value.trim();
+                
+                if(text) {
+                    await speakPromise(getSpeechText(text), role, 1.0); // 試聽用正常速度
+                    await new Promise(r => setTimeout(r, 300));
+                }
+            }
+
+            // 讀取問題
+            if(questionText) {
+                await new Promise(r => setTimeout(r, 800));
+                await speakPromise("請問：" + getSpeechText(questionText), 'b', 1.0);
+            }
+        }
+
         function addScriptLine(qId) {
             const container = document.getElementById(`script-container-${qId}`);
             const div = document.createElement('div');
             div.className = 'script-row';
-            // 這裡更新了選項顯示名稱
             div.innerHTML = `
                 <select class="role-select role-a" onchange="changeRoleColor(this)">
                     <option value="a">角色 A (低沉)</option>

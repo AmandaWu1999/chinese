@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日看圖聽力 V3.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 基礎設定 --- */
+        :root { --bg: #f4f4f4; --card: #fff; --primary: #555; --text: #333; --border: #ccc; --radius: 12px; --font: 'Microsoft JhengHei', sans-serif; }
+        body { margin: 0; padding: 20px; padding-bottom: 60px; font-family: var(--font); background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; transition: 0.3s; }
+        .container { background: var(--card); padding: 30px; width: 95%; max-width: 700px; border-radius: var(--radius); border: 2px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative; }
+        .btn { background: var(--primary); color: #fff; border: none; padding: 12px 24px; border-radius: 50px; cursor: pointer; font-size: 16px; margin: 8px; font-family: inherit; transition: 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+        .btn:hover { filter: brightness(1.1); }
+        .btn-upload { background: #00897B; font-size: 14px; padding: 8px 15px; }
+        .btn-tiny { background: #E91E63; } /* 縮網址按鈕顏色 */
+        
+        input[type="text"], select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+
+        /* 題目區 */
+        .q-block { background: rgba(0,0,0,0.03); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--border); }
+        .q-block h3 { margin: 0 0 10px 0; color: var(--primary); }
+        .img-control-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .preview-thumb { width: 60px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; display: none; background: #eee; }
+        .option-row { display: flex; gap: 10px; align-items: center; }
+
+        /* 學生區 */
+        .quiz-image-box { width: 100%; height: 250px; background: #eee; border-radius: var(--radius); margin-bottom: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid var(--primary); }
+        .quiz-image-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; width: 100%; margin-top: 20px; }
+        .option-btn { background: #fff; border: 2px solid var(--primary); color: var(--text); padding: 15px; border-radius: 10px; font-size: 18px; cursor: pointer; transition: 0.2s; text-align: left; }
+        .option-btn.correct { background: #C8E6C9; border-color: #4CAF50; color: #2E7D32; }
+        .option-btn.wrong { background: #FFCDD2; border-color: #F44336; color: #C62828; }
+
+        .footer-credit { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); text-align: center; padding: 10px 0; font-size: 14px; color: #666; border-top: 1px solid #ddd; z-index: 999; }
+        .footer-credit span { font-weight: bold; color: #333; }
+        
+        /* 風格 */
+        body.style-morandi { --bg: #D8E2DC; --card: #F9F7F2; --primary: #9D8189; --text: #6D6875; --border: #B5B2BE; --radius: 12px; }
+        body.style-wood { --bg: #EFEBE9; --card: #FFF3E0; --primary: #8D6E63; --text: #3E2723; --border: #D7CCC8; --radius: 8px; background-image: repeating-linear-gradient(45deg, #EFEBE9 0, #EFEBE9 10px, #D7CCC8 10px, #D7CCC8 12px); }
+        body.style-tech { --bg: #ECEFF1; --card: #FFF; --primary: #0097A7; --text: #37474F; --border: #B2EBF2; --radius: 4px; }
+        body.style-sky { --bg: #E1F5FE; --card: #FFF; --primary: #4FC3F7; --text: #0277BD; --border: #B3E5FC; --radius: 20px; background-image: radial-gradient(#FFF 20%, transparent 20%); background-size: 20px 20px; }
+        body.style-chalk { --bg: #263238; --card: #37474F; --primary: #FFCC80; --text: #FFF; --border: #546E7A; --radius: 6px; }
+        body.style-chalk input { background: #455A64; color: white; border: 1px solid #78909C; }
+        body.style-chalk .option-btn { background: transparent; color: white; border-color: #FFCC80; }
+
+        .hidden { display: none !important; }
+        .stamp { position: absolute; right: 20px; bottom: 20px; font-size: 40px; border: 3px solid #D32F2F; color: #D32F2F; padding: 15px; transform: rotate(-15deg); border-radius: 50%; opacity: 0.8; font-weight: bold; background: rgba(255,255,255,0.8); }
+        
+        /* 載入中遮罩 */
+        #loading-mask { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; display:flex; justify-content:center; align-items:center; color:white; font-size:20px; }
+    </style>
+</head>
+<body class="style-morandi">
+
+    <div id="loading-mask" class="hidden">🔄 正在處理圖片並產生網址...</div>
+    <div class="footer-credit">Designed by <span>台師大吳穎純老師</span> | Powered by AI Tool</div>
+    <h1 id="page-title">📷 每日看圖聽力 V3</h1>
+
+    <div id="teacher-setup" class="container">
+        <h2>✏️ 老師出題 (自動縮址版)</h2>
+        <label>1. 選擇風格</label>
+        <select id="input-style" onchange="previewStyle()">
+            <option value="style-morandi">1. 莫蘭迪 Morandi</option>
+            <option value="style-wood">2. 溫暖木質 Wood</option>
+            <option value="style-tech">3. 科技藍調 Tech</option>
+            <option value="style-sky">4. 可愛天空 Sky</option>
+            <option value="style-chalk">5. 教室黑板 Chalkboard</option>
+        </select>
+        <label>2. 作業標題</label>
+        <input type="text" id="input-title" placeholder="例如：11/26 每日聽力練習">
+        <hr style="border:0; border-top:1px dashed var(--border); margin:20px 0;">
+        
+        <div id="questions-wrapper"></div>
+
+        <button class="btn" onclick="generateLink()">✨ 產生作業連結</button>
+
+        <div id="result-box" class="hidden" style="margin-top:20px; padding:15px; border:1px solid var(--border); background: rgba(255,255,255,0.5);">
+            <p id="url-status">✅ 網址已生成 (原始網址)：</p>
+            <textarea id="generated-link" style="height:60px; font-size:12px;" readonly></textarea>
+            
+            <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn" onclick="copyLink()">📋 複製網址</button>
+                <button class="btn btn-tiny" onclick="tryAutoShorten()">🪄 嘗試自動縮短 (TinyURL)</button>
+                <button class="btn" onclick="testPlay()">🎮 試玩</button>
+            </div>
+            <p style="font-size:12px; color:#666; margin-top:5px;">* 如果網址太長導致無法分享，請按「嘗試自動縮短」。</p>
+        </div>
+    </div>
+
+    <div id="student-login" class="container hidden" style="text-align:center;">
+        <h2 id="login-title">準備開始</h2>
+        <p>請輸入名字：</p>
+        <input type="text" id="student-name" placeholder="Name" style="text-align:center; font-size:18px;">
+        <br><br>
+        <button class="btn" onclick="startQuiz()">🚀 開始挑戰</button>
+    </div>
+
+    <div id="game-area" class="container hidden">
+        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <span id="display-name"></span>
+            <span>第 <span id="current-q">1</span> / 5 題</span>
+        </div>
+        <hr style="border-top: 1px solid var(--border); margin: 15px 0;">
+        <div class="quiz-image-box">
+            <img id="q-img" src="" alt="題目圖片">
+        </div>
+        <div style="text-align:center;">
+            <button class="btn" onclick="playAudio(1)">🔊 播放</button>
+            <button class="btn" style="opacity:0.8; font-size:14px;" onclick="playAudio(0.7)">🐢 慢速</button>
+        </div>
+        <div class="options-grid" id="options-area"></div>
+        <div id="feedback" style="text-align:center; height:30px; margin-top:10px; font-weight:bold;"></div>
+    </div>
+
+    <div id="result-area" class="container hidden" style="text-align:center;">
+        <div style="font-size:80px; margin-bottom:10px;">🏆</div>
+        <h2>完成！Excellent!</h2>
+        <h3 id="result-title-display"></h3>
+        <p>姓名：<strong id="result-name" style="font-size:24px;"></strong></p>
+        <div style="font-size:60px; font-weight:bold; color:var(--primary); margin:20px;">
+            <span id="final-score">100</span> <span style="font-size:20px;">分</span>
+        </div>
+        <p>日期：<span id="finish-date"></span></p>
+        <div class="stamp">台師大認證</div>
+        <p style="color:var(--primary); font-size:14px;">(請截圖回傳)</p>
+    </div>
+
+    <script>
+        const totalQuestions = 5;
+        let questionsData = [];
+        let currentIdx = 0;
+        let score = 0;
+        let studentName = "";
+        let settings = { title: "看圖聽力", style: "style-morandi" };
+        const correctSound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/success.mp3');
+        const victorySound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/victory.mp3');
+
+        // --- 1. 產生題目框 ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const wrapper = document.getElementById('questions-wrapper');
+            if (wrapper) {
+                for (let i = 1; i <= totalQuestions; i++) {
+                    wrapper.innerHTML += `
+                        <div class="q-block">
+                            <h3>第 ${i} 題</h3>
+                            <div class="img-control-row">
+                                <button class="btn btn-upload" onclick="document.getElementById('file-${i}').click()">📂 選擇檔案</button>
+                                <input type="file" id="file-${i}" accept="image/*" style="display:none" onchange="handleFileUpload(this, ${i})">
+                                <span style="font-size:14px; color:#666;">或</span>
+                                <input type="text" id="url-${i}" class="input-img" style="flex:1;" placeholder="貼上圖片網址...">
+                                <img id="preview-${i}" class="preview-thumb">
+                            </div>
+                            <input type="text" class="input-text" placeholder="聽力文稿 (例如：這是一隻貓)">
+                            <div style="margin-top:5px;">
+                                <div class="option-row"><input type="radio" name="q${i}" value="0" checked> <input type="text" class="opt-0" placeholder="選項 A"></div>
+                                <div class="option-row"><input type="radio" name="q${i}" value="1"> <input type="text" class="opt-1" placeholder="選項 B"></div>
+                                <div class="option-row"><input type="radio" name="q${i}" value="2"> <input type="text" class="opt-2" placeholder="選項 C"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            checkUrlData();
+        });
+
+        // --- 2. 強力圖片壓縮 (V3 核心) ---
+        function handleFileUpload(input, index) {
+            const file = input.files[0];
+            if(!file) return;
+            
+            document.getElementById('loading-mask').classList.remove('hidden');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    // 限制最大寬度為 250px (大幅減少體積)
+                    const maxWidth = 250;
+                    const scale = maxWidth / img.width;
+                    canvas.width = maxWidth;
+                    canvas.height = img.height * scale;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // 使用 JPEG 格式，品質壓縮到 0.5
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.5);
+                    
+                    document.getElementById(`url-${index}`).value = compressedData;
+                    const thumb = document.getElementById(`preview-${index}`);
+                    thumb.src = compressedData;
+                    thumb.style.display = "block";
+                    
+                    document.getElementById('loading-mask').classList.add('hidden');
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function previewStyle() { document.body.className = document.getElementById('input-style').value; }
+
+        function generateLink() {
+            const title = document.getElementById('input-title').value.trim() || "每日聽力";
+            const style = document.getElementById('input-style').value;
+            const qBlocks = document.querySelectorAll('.q-block');
+            
+            let qList = [];
+            qBlocks.forEach((block, idx) => {
+                const img = block.querySelector('.input-img').value.trim();
+                const text = block.querySelector('.input-text').value.trim();
+                const opts = [
+                    block.querySelector('.opt-0').value.trim(),
+                    block.querySelector('.opt-1').value.trim(),
+                    block.querySelector('.opt-2').value.trim()
+                ];
+                const correct = block.querySelector(`input[name="q${idx+1}"]:checked`).value;
+                if (text && opts[0]) qList.push({ img, text, opts, correct: parseInt(correct) });
+            });
+
+            if (qList.length < 1) return alert("請至少輸入一題");
+
+            const pack = { s: { title, style }, q: qList };
+            const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(pack));
+            const url = `${window.location.href.split('?')[0]}?data=${compressed}`;
+            
+            document.getElementById('result-box').classList.remove('hidden');
+            document.getElementById('generated-link').value = url;
+            document.getElementById('url-status').innerText = "✅ 網址已生成 (原始長網址)：";
+        }
+
+        // --- 3. 自動縮網址 (TinyURL API) ---
+        function tryAutoShorten() {
+            const longUrl = document.getElementById('generated-link').value;
+            if(!longUrl) return;
+
+            const btn = document.querySelector('.btn-tiny');
+            btn.innerText = "⏳ 處理中...";
+            btn.disabled = true;
+
+            // 嘗試使用 fetch 呼叫 TinyURL
+            fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl))
+            .then(response => {
+                if (response.ok) return response.text();
+                throw new Error('Network response was not ok.');
+            })
+            .then(shortUrl => {
+                document.getElementById('generated-link').value = shortUrl;
+                document.getElementById('url-status').innerText = "✨ 成功！這是您的短網址：";
+                btn.innerText = "✅ 成功縮短";
+                alert("縮網址成功！現在可以直接複製使用了。");
+            })
+            .catch(error => {
+                console.error('縮網址失敗:', error);
+                btn.innerText = "❌ 自動縮短失敗";
+                // 失敗時提供備用方案
+                if(confirm("自動縮短失敗 (可能是網址太長或網路問題)。\n\n是否要開啟 TinyURL 網站手動縮短？\n(我會先幫您複製好網址)")) {
+                    copyLink();
+                    window.open("https://tinyurl.com/app", "_blank");
+                }
+            });
+        }
+
+        function copyLink() {
+            const text = document.getElementById('generated-link');
+            text.select();
+            document.execCommand('copy');
+            alert("網址已複製到剪貼簿！");
+        }
+        function testPlay() { window.location.href = document.getElementById('generated-link').value; }
+
+        // --- 學生端邏輯 ---
+        function checkUrlData() {
+            const params = new URLSearchParams(window.location.search);
+            const data = params.get('data');
+            if (data) {
+                try {
+                    const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(data));
+                    questionsData = decoded.q;
+                    settings = decoded.s;
+                    enterStudentMode();
+                } catch (e) { console.error(e); }
+            } else {
+                document.getElementById('teacher-setup').classList.remove('hidden');
+                previewStyle();
+            }
+        }
+
+        function enterStudentMode() {
+            document.getElementById('teacher-setup').classList.add('hidden');
+            document.getElementById('student-login').classList.remove('hidden');
+            document.body.className = settings.style;
+            document.getElementById('login-title').innerText = settings.title;
+        }
+
+        function startQuiz() {
+            const n = document.getElementById('student-name').value.trim();
+            if (!n) return alert("請輸入名字");
+            studentName = n;
+            document.getElementById('student-login').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            document.getElementById('display-name').innerText = n;
+            currentIdx = 0; score = 0; loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentIdx >= questionsData.length) { showResult(); return; }
+            const q = questionsData[currentIdx];
+            document.getElementById('current-q').innerText = currentIdx + 1;
+            document.getElementById('q-img').src = q.img || "https://via.placeholder.com/400x250?text=No+Image";
+            const area = document.getElementById('options-area');
+            area.innerHTML = "";
+            document.getElementById('feedback').innerText = "";
+            q.opts.forEach((optText, idx) => {
+                if(!optText) return; 
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = optText;
+                btn.onclick = () => checkAnswer(idx, btn);
+                area.appendChild(btn);
+            });
+        }
+
+        function playAudio(rate) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(questionsData[currentIdx].text);
+            u.lang = 'zh-TW'; u.rate = rate;
+            window.speechSynthesis.speak(u);
+        }
+
+        let isAnswered = false;
+        function checkAnswer(selectedIdx, btnElement) {
+            if (isAnswered) return;
+            isAnswered = true;
+            const q = questionsData[currentIdx];
+            if (selectedIdx === q.correct) {
+                btnElement.classList.add('correct');
+                document.getElementById('feedback').innerText = "🎉 答對了！";
+                document.getElementById('feedback').style.color = "green";
+                score += 20;
+                correctSound.currentTime = 0; correctSound.play();
+            } else {
+                btnElement.classList.add('wrong');
+                document.getElementById('feedback').innerText = "❌ 答錯了！";
+                document.getElementById('feedback').style.color = "red";
+                document.querySelectorAll('.option-btn')[q.correct].classList.add('correct');
+            }
+            setTimeout(() => { currentIdx++; isAnswered = false; loadQuestion(); }, 2000);
+        }
+
+        function showResult() {
+            document.getElementById('game-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+            document.getElementById('result-title-display').innerText = settings.title;
+            document.getElementById('result-name').innerText = studentName;
+            document.getElementById('final-score').innerText = Math.round((score / (questionsData.length * 20)) * 100);
+            const d = new Date();
+            document.getElementById('finish-date').innerText = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+            victorySound.play();
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        }
+    </script>
+</body>
+</html>

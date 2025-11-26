@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>華語對話聽力練習</title>
+    <title>雙人對話聽力 V7.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
@@ -12,46 +12,44 @@
         /* --- 基礎設定 --- */
         :root { --bg: #f4f4f4; --card: #fff; --primary: #555; --text: #333; --border: #ccc; --radius: 12px; --font: 'Microsoft JhengHei', sans-serif; }
         body { margin: 0; padding: 20px; padding-bottom: 60px; font-family: var(--font); background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; transition: 0.3s; }
-        
-        .container { 
-            background: var(--card); padding: 30px; width: 95%; max-width: 800px; 
-            border-radius: var(--radius); border: 2px solid var(--border); 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative;
-        }
-
-        .btn { background: var(--primary); color: #fff; border: none; padding: 12px 24px; border-radius: 50px; cursor: pointer; font-size: 16px; margin: 8px; font-family: inherit; transition: 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
-        .btn:active { transform: translateY(3px); box-shadow: none; }
-        .btn:hover { filter: brightness(1.1); }
-        
+        .container { background: var(--card); padding: 30px; width: 95%; max-width: 800px; border-radius: var(--radius); border: 2px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative; }
+        .btn { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-size: 15px; margin: 5px; font-family: inherit; transition: 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+        .btn:active { transform: translateY(3px); box-shadow: none; } .btn:hover { filter: brightness(1.1); }
+        .btn-add { background: #4CAF50; } .btn-del { background: #E57373; padding: 5px 10px; font-size: 12px; margin-left: 5px;}
+        .btn-test { background: #607D8B; font-size: 14px; }
         input[type="text"], textarea, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 15px; font-family: inherit; }
-        textarea { height: 80px; resize: vertical; }
 
-        /* --- 出題區塊 --- */
+        /* --- 提示區 --- */
+        .instruction-box { background: #E3F2FD; border-left: 5px solid #2196F3; padding: 15px; margin-bottom: 20px; border-radius: 4px; font-size: 15px; line-height: 1.6; color: #333; }
+        .code-tag { background: #fff; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #D32F2F; font-weight: bold; border: 1px solid #ccc; }
+        .role-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; color: white; margin: 0 2px; }
+
+        /* 出題區 */
         .q-block { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed var(--border); }
-        .q-block h3 { margin: 0 0 10px 0; color: var(--primary); border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 5px; }
-        .option-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
-        .label-text { font-weight: bold; font-size: 14px; color: #666; margin-top: 10px; display: block; }
-
-        /* --- 學生答題區 --- */
-        .audio-box { text-align: center; background: rgba(0,0,0,0.05); padding: 20px; border-radius: var(--radius); margin-bottom: 20px; }
-        .status-text { font-size: 14px; color: #666; margin-bottom: 10px; }
+        .script-row { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
         
+        /* 角色選擇器 */
+        .role-select { width: 140px; font-weight: bold; border-width: 2px; } /* 加寬一點 */
+        .role-select.role-a { background: #E8EAF6; border-color: #3F51B5; color: #1A237E; }
+        .role-select.role-b { background: #FFF3E0; border-color: #FF9800; color: #E65100; }
+        
+        .line-input { flex: 1; }
+        .label-text { font-weight: bold; font-size: 14px; color: #666; margin-top: 15px; display: block; }
+        .option-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
+
+        /* 答題區 */
+        .audio-box { text-align: center; background: rgba(0,0,0,0.05); padding: 20px; border-radius: var(--radius); margin-bottom: 20px; }
+        .status-text { font-size: 16px; color: #333; margin-bottom: 15px; min-height: 24px; font-weight: bold; color: var(--primary); }
         .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; margin-top: 10px; }
         .option-btn { background: #fff; border: 2px solid var(--primary); color: var(--text); padding: 15px; border-radius: 10px; font-size: 18px; cursor: pointer; transition: 0.2s; text-align: left; display: flex; align-items: center; }
         .option-btn:hover { background: rgba(0,0,0,0.05); transform: translateX(5px); }
         .option-btn .abc { font-weight: bold; margin-right: 15px; background: var(--primary); color: #fff; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        
-        .option-btn.correct { background: #C8E6C9; border-color: #4CAF50; }
-        .option-btn.correct .abc { background: #4CAF50; }
-        
-        .option-btn.wrong { background: #FFCDD2; border-color: #F44336; }
-        .option-btn.wrong .abc { background: #F44336; }
+        .option-btn.correct { background: #C8E6C9; border-color: #4CAF50; } .option-btn.wrong { background: #FFCDD2; border-color: #F44336; }
 
-        /* --- 署名頁尾 --- */
         .footer-credit { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); text-align: center; padding: 10px 0; font-size: 14px; color: #666; border-top: 1px solid #ddd; z-index: 999; }
         .footer-credit span { font-weight: bold; color: #333; }
-
-        /* --- 五大風格 --- */
+        
+        /* 風格定義 */
         body.style-morandi { --bg: #D8E2DC; --card: #F9F7F2; --primary: #9D8189; --text: #6D6875; --border: #B5B2BE; --radius: 12px; }
         body.style-wood { --bg: #EFEBE9; --card: #FFF3E0; --primary: #8D6E63; --text: #3E2723; --border: #D7CCC8; --radius: 8px; background-image: repeating-linear-gradient(45deg, #EFEBE9 0, #EFEBE9 10px, #D7CCC8 10px, #D7CCC8 12px); }
         body.style-tech { --bg: #ECEFF1; --card: #FFF; --primary: #0097A7; --text: #37474F; --border: #B2EBF2; --radius: 4px; }
@@ -68,11 +66,27 @@
 
     <div class="footer-credit">Designed by <span>台師大吳穎純老師</span> | Powered by AI Tool</div>
 
-    <h1 id="page-title">🎧 對話聽力練習</h1>
+    <h1 id="page-title">🎧 雙人對話聽力 V7</h1>
 
     <div id="teacher-setup" class="container">
-        <h2 style="border-bottom: 2px solid var(--border); padding-bottom: 10px;">✏️ 老師出題 (上限10題)</h2>
+        <h2>✏️ 老師出題</h2>
         
+        <div class="instruction-box">
+            <h3>📖 聲音與角色說明：</h3>
+            <ul>
+                <li><b>角色分配：</b> 
+                    <span class="role-badge" style="background:#3F51B5;">角色 A</span> 為「低沉音」（適合模擬男聲/長輩）；
+                    <span class="role-badge" style="background:#FF9800;">角色 B</span> 為「高亢音」（適合模擬女聲/小孩）。
+                </li>
+                <li><b>聲音測試：</b> 請先點選下方按鈕試聽，確認效果。</li>
+                <li><b>破音字修正：</b> 請用 <span class="code-tag">{顯示|讀音}</span>。例如：<span class="code-tag">我要去銀{行|航}</span>。</li>
+            </ul>
+        </div>
+
+        <div style="text-align:center; margin-bottom:20px;">
+            <button class="btn btn-test" onclick="testVoices()">🔊 試聽 A 與 B 的聲音</button>
+        </div>
+
         <label>1. 選擇風格</label>
         <select id="input-style" onchange="previewStyle()">
             <option value="style-morandi">1. 莫蘭迪 Morandi</option>
@@ -81,20 +95,14 @@
             <option value="style-sky">4. 可愛天空 Sky</option>
             <option value="style-chalk">5. 教室黑板 Chalkboard</option>
         </select>
-
         <label>2. 作業標題</label>
-        <input type="text" id="input-title" placeholder="例如：第五課 對話理解測驗">
-
+        <input type="text" id="input-title" placeholder="例如：第五課 對話練習">
         <hr style="border:0; border-top:1px dashed var(--border); margin:20px 0;">
-        
         <div id="questions-wrapper"></div>
-        
-        <button class="btn" onclick="addQuestion()" style="background:#666; font-size:14px;">+ 增加一題</button>
+        <button class="btn btn-add" onclick="addQuestion()">+ 增加一題</button>
         <span style="font-size:12px; color:#888;">(最多10題)</span>
         <br><br>
-
         <button class="btn" onclick="generateLink()">✨ 產生作業連結</button>
-
         <div id="result-box" class="hidden" style="margin-top:20px; padding:15px; border:1px solid var(--border); background: rgba(255,255,255,0.5);">
             <p>✅ 網址已生成：</p>
             <textarea id="generated-link" style="height:60px; font-size:12px;" readonly></textarea>
@@ -105,7 +113,7 @@
 
     <div id="student-login" class="container hidden" style="text-align:center;">
         <h2 id="login-title">準備開始</h2>
-        <p>請輸入名字開始練習：</p>
+        <p>請輸入名字：</p>
         <input type="text" id="student-name" placeholder="Name" style="text-align:center; font-size:18px;">
         <br><br>
         <button class="btn" onclick="startQuiz()">🚀 開始測驗</button>
@@ -117,18 +125,16 @@
             <span>第 <span id="current-q">1</span> / <span id="total-q">10</span> 題</span>
         </div>
         <hr style="border-top: 1px solid var(--border); margin: 15px 0;">
-
         <div class="audio-box">
             <div style="font-size:50px; margin-bottom:10px;">🔊</div>
-            <div class="status-text">請仔細聽對話與問題</div>
-            <button class="btn" onclick="playAudio(1)">▶️ 播放對話</button>
-            <button class="btn" style="opacity:0.8; font-size:14px;" onclick="playAudio(0.7)">🐢 慢速</button>
-        </div>
-
-        <p style="text-align:center; font-size:14px; color:#666;">請選出正確答案：</p>
-        <div class="options-grid" id="options-area">
+            <div id="status-text" class="status-text">點擊按鈕開始播放</div>
+            <div style="margin-top:15px;">
+                <button id="play-btn-normal" class="btn" onclick="playDialogue(1.0)">▶️ 正常速度</button>
+                <button id="play-btn-slow" class="btn" style="background:#00897B;" onclick="playDialogue(0.85)">🐢 慢速 (0.85x)</button>
             </div>
-
+        </div>
+        <p style="text-align:center; font-size:14px; color:#666;">請選出正確答案：</p>
+        <div class="options-grid" id="options-area"></div>
         <div id="feedback" style="text-align:center; height:30px; margin-top:10px; font-weight:bold;"></div>
     </div>
 
@@ -146,7 +152,6 @@
     </div>
 
     <script>
-        // --- 初始化 ---
         const maxQuestions = 10;
         let questionCount = 0;
         let questionsData = [];
@@ -154,72 +159,105 @@
         let score = 0;
         let studentName = "";
         let settings = { title: "對話聽力", style: "style-morandi" };
-        
         const correctSound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/success.mp3');
         const victorySound = new Audio('https://raw.githubusercontent.com/Arza-3d/ar3.js/master/assets/audio/victory.mp3');
 
-        // --- 1. 動態增加題目欄位 ---
-        function addQuestion() {
-            if (questionCount >= maxQuestions) return alert("最多只能出 10 題喔！");
-            questionCount++;
+        function getSpeechText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$2'); }
+        function getDisplayText(text) { return text.replace(/\{(.+?)\|(.+?)\}/g, '$1'); }
+
+        // 新增：聲音測試 (配合新的說明)
+        function testVoices() {
+            window.speechSynthesis.cancel();
+            const u1 = new SpeechSynthesisUtterance("你好，我是角色B，這是高亢音。");
+            u1.lang = 'zh-TW'; u1.rate = 1.0; u1.pitch = 1.0; 
             
+            u1.onend = function() {
+                const u2 = new SpeechSynthesisUtterance("你好，我是角色A，這是低沉音。");
+                u2.lang = 'zh-TW'; u2.rate = 0.95; u2.pitch = 0.85; 
+                const voices = window.speechSynthesis.getVoices().filter(v => v.lang.includes('zh') || v.lang.includes('CN') || v.lang.includes('TW'));
+                if(voices.length > 1) u2.voice = voices[1];
+                window.speechSynthesis.speak(u2);
+            };
+            window.speechSynthesis.speak(u1);
+        }
+
+        function addQuestion() {
+            if (questionCount >= maxQuestions) return alert("最多 10 題！");
+            questionCount++;
             const wrapper = document.getElementById('questions-wrapper');
             const div = document.createElement('div');
             div.className = 'q-block';
             div.innerHTML = `
                 <h3>第 ${questionCount} 題</h3>
-                <span class="label-text">對話內容 (學生聽得到，看不到)：</span>
-                <textarea class="input-dialogue" placeholder="例如：&#10;男：你明天要去哪裡？&#10;女：我要去圖書館看書。"></textarea>
-                
-                <span class="label-text">問題 (通常由語音唸出)：</span>
-                <input type="text" class="input-question" placeholder="例如：請問女生明天要去哪裡？">
-                
-                <span class="label-text">選項 (學生看得到)：</span>
+                <span class="label-text">對話腳本：</span>
+                <div class="script-container" id="script-container-${questionCount}"></div>
+                <button class="btn btn-add" style="font-size:12px; padding:5px 10px;" onclick="addScriptLine(${questionCount})">+ 增加一句</button>
+                <span class="label-text">問題：</span>
+                <input type="text" class="input-question" placeholder="例如：請問角色 A 覺得怎麼樣？">
+                <span class="label-text">選項：</span>
                 <div class="option-row"><input type="radio" name="q${questionCount}" value="0" checked> <input type="text" class="opt-0" placeholder="選項 A"></div>
                 <div class="option-row"><input type="radio" name="q${questionCount}" value="1"> <input type="text" class="opt-1" placeholder="選項 B"></div>
                 <div class="option-row"><input type="radio" name="q${questionCount}" value="2"> <input type="text" class="opt-2" placeholder="選項 C"></div>
                 <div class="option-row"><input type="radio" name="q${questionCount}" value="3"> <input type="text" class="opt-3" placeholder="選項 D"></div>
             `;
             wrapper.appendChild(div);
+            addScriptLine(questionCount); addScriptLine(questionCount);
+        }
+
+        function addScriptLine(qId) {
+            const container = document.getElementById(`script-container-${qId}`);
+            const div = document.createElement('div');
+            div.className = 'script-row';
+            // 這裡更新了選項顯示名稱
+            div.innerHTML = `
+                <select class="role-select role-a" onchange="changeRoleColor(this)">
+                    <option value="a">角色 A (低沉)</option>
+                    <option value="b">角色 B (高亢)</option>
+                </select>
+                <input type="text" class="line-input" placeholder="台詞...">
+                <button class="btn btn-del" onclick="this.parentElement.remove()">x</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function changeRoleColor(select) {
+            if(select.value === 'b') { select.classList.remove('role-a'); select.classList.add('role-b'); } 
+            else { select.classList.remove('role-b'); select.classList.add('role-a'); }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            // 預設先加一題
             if(!window.location.search.includes('data=')) addQuestion();
             checkUrlData();
+            window.speechSynthesis.getVoices();
         });
 
         function previewStyle() { document.body.className = document.getElementById('input-style').value; }
 
-        // --- 2. 產生連結 ---
         function generateLink() {
             const title = document.getElementById('input-title').value.trim() || "聽力測驗";
             const style = document.getElementById('input-style').value;
             const qBlocks = document.querySelectorAll('.q-block');
-            
             let qList = [];
             qBlocks.forEach((block, idx) => {
-                const dialogue = block.querySelector('.input-dialogue').value.trim();
+                const scriptRows = block.querySelectorAll('.script-row');
+                let dialogue = [];
+                scriptRows.forEach(row => {
+                    const role = row.querySelector('.role-select').value;
+                    const text = row.querySelector('.line-input').value.trim();
+                    if(text) dialogue.push({r: role, t: text});
+                });
                 const question = block.querySelector('.input-question').value.trim();
                 const opts = [
-                    block.querySelector('.opt-0').value.trim(),
-                    block.querySelector('.opt-1').value.trim(),
-                    block.querySelector('.opt-2').value.trim(),
-                    block.querySelector('.opt-3').value.trim()
+                    block.querySelector('.opt-0').value.trim(), block.querySelector('.opt-1').value.trim(),
+                    block.querySelector('.opt-2').value.trim(), block.querySelector('.opt-3').value.trim()
                 ];
                 const correct = block.querySelector(`input[name="q${idx+1}"]:checked`).value;
-
-                if (dialogue && opts[0] && opts[1]) {
-                    qList.push({ d: dialogue, q: question, o: opts, a: parseInt(correct) });
-                }
+                if (dialogue.length > 0 && opts[0]) qList.push({ d: dialogue, q: question, o: opts, a: parseInt(correct) });
             });
-
-            if (qList.length < 1) return alert("請至少完整輸入一題");
-
+            if (qList.length < 1) return alert("請至少輸入一題");
             const pack = { s: { title, style }, q: qList };
             const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(pack));
             const url = `${window.location.href.split('?')[0]}?data=${compressed}`;
-            
             document.getElementById('result-box').classList.remove('hidden');
             document.getElementById('generated-link').value = url;
         }
@@ -231,15 +269,13 @@
         }
         function testPlay() { window.location.href = document.getElementById('generated-link').value; }
 
-        // --- 3. 學生端邏輯 ---
         function checkUrlData() {
             const params = new URLSearchParams(window.location.search);
             const data = params.get('data');
             if (data) {
                 try {
                     const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(data));
-                    questionsData = decoded.q;
-                    settings = decoded.s;
+                    questionsData = decoded.q; settings = decoded.s;
                     enterStudentMode();
                 } catch (e) { console.error(e); }
             } else {
@@ -263,122 +299,113 @@
             document.getElementById('game-area').classList.remove('hidden');
             document.getElementById('display-name').innerText = n;
             document.getElementById('total-q').innerText = questionsData.length;
-            
-            currentIdx = 0; score = 0;
-            loadQuestion();
+            currentIdx = 0; score = 0; loadQuestion();
         }
 
         function loadQuestion() {
-            if (currentIdx >= questionsData.length) {
-                showResult();
-                return;
-            }
-
-            const q = questionsData[currentIdx];
+            if (currentIdx >= questionsData.length) { showResult(); return; }
             document.getElementById('current-q').innerText = currentIdx + 1;
-            
+            const q = questionsData[currentIdx];
             const area = document.getElementById('options-area');
             area.innerHTML = "";
             document.getElementById('feedback').innerText = "";
+            document.getElementById('status-text').innerText = "準備好請點擊播放";
+            document.getElementById('play-btn-normal').disabled = false;
+            document.getElementById('play-btn-slow').disabled = false;
             
             const labels = ["A", "B", "C", "D"];
             q.o.forEach((optText, idx) => {
                 if(!optText) return; 
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
-                btn.innerHTML = `<span class="abc">${labels[idx]}</span> ${optText}`;
+                btn.innerHTML = `<span class="abc">${labels[idx]}</span> ${getDisplayText(optText)}`;
                 btn.onclick = () => checkAnswer(idx, btn);
                 area.appendChild(btn);
             });
         }
 
-        function playAudio(rate) {
-            window.speechSynthesis.cancel();
+        let isPlaying = false;
+        
+        async function playDialogue(speedMultiplier) {
+            if(isPlaying) return;
+            isPlaying = true;
+            document.getElementById('play-btn-normal').disabled = true;
+            document.getElementById('play-btn-slow').disabled = true;
+            
             const q = questionsData[currentIdx];
-            
-            // 語音邏輯：先唸對話 -> 停頓 -> 唸問題
-            // 為了讓停頓自然，我們拆成兩段唸
-            const dialogueUtterance = new SpeechSynthesisUtterance(q.d);
-            dialogueUtterance.lang = 'zh-TW'; 
-            dialogueUtterance.rate = rate;
-            
-            // 問題
-            const questionUtterance = new SpeechSynthesisUtterance("請問：" + q.q);
-            questionUtterance.lang = 'zh-TW';
-            questionUtterance.rate = rate;
+            const status = document.getElementById('status-text');
+            window.speechSynthesis.cancel();
 
-            // 播放序列
-            window.speechSynthesis.speak(dialogueUtterance);
+            for (let i = 0; i < q.d.length; i++) {
+                const line = q.d[i];
+                const roleName = line.r === 'a' ? "角色 A" : "角色 B";
+                status.innerText = `🔊 ${roleName} 說話中...`;
+                await speakPromise(getSpeechText(line.t), line.r, speedMultiplier);
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            status.innerText = "...";
+            await new Promise(r => setTimeout(r, 1000));
+
+            status.innerText = "🔊 請問...";
+            await speakPromise("請問：" + getSpeechText(q.q), 'b', speedMultiplier); 
             
-            // 中間插入一個無聲的停頓 (利用 pause 比較難控制，用空白音訊 trick)
-            // 簡單做法：直接連續播放，中間加一點字串停頓
-            // 更好的做法：對話唸完，過一秒唸問題
-            
-            dialogueUtterance.onend = function() {
-                setTimeout(() => {
-                    if(q.q) window.speechSynthesis.speak(questionUtterance);
-                }, 1000); // 停頓 1 秒
-            };
+            status.innerText = "請作答";
+            isPlaying = false;
+            document.getElementById('play-btn-normal').disabled = false;
+            document.getElementById('play-btn-slow').disabled = false;
+        }
+
+        function speakPromise(text, role, speedMultiplier) {
+            return new Promise((resolve) => {
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'zh-TW';
+                let baseRate = 1.0; let basePitch = 1.0;
+                
+                if (role === 'a') { basePitch = 0.85; baseRate = 0.95; } 
+                else { basePitch = 1.2; baseRate = 0.95; }
+                
+                u.rate = baseRate * speedMultiplier;
+                u.pitch = basePitch;
+                
+                const voices = window.speechSynthesis.getVoices().filter(v => v.lang.includes('zh') || v.lang.includes('CN') || v.lang.includes('TW'));
+                if (voices.length > 1 && role === 'a') u.voice = voices[1]; 
+
+                u.onend = resolve;
+                window.speechSynthesis.speak(u);
+            });
         }
 
         let isAnswered = false;
-        
         function checkAnswer(selectedIdx, btnElement) {
-            if (isAnswered) return;
-            
+            if (isAnswered || isPlaying) return;
             const q = questionsData[currentIdx];
             const isCorrect = (selectedIdx === q.a);
             const feedback = document.getElementById('feedback');
             const allBtns = document.querySelectorAll('.option-btn');
-
             isAnswered = true;
-
             if (isCorrect) {
                 btnElement.classList.add('correct');
-                feedback.innerText = "🎉 答對了！";
-                feedback.style.color = "green";
-                score++;
-                correctSound.currentTime = 0;
-                correctSound.play();
+                feedback.innerText = "🎉 答對了！"; feedback.style.color = "green";
+                score++; correctSound.currentTime = 0; correctSound.play();
             } else {
                 btnElement.classList.add('wrong');
-                feedback.innerText = "❌ 答錯了！";
-                feedback.style.color = "red";
+                feedback.innerText = "❌ 答錯了！"; feedback.style.color = "red";
                 allBtns[q.a].classList.add('correct');
             }
-
-            setTimeout(() => {
-                currentIdx++;
-                isAnswered = false;
-                loadQuestion();
-            }, 2500);
+            setTimeout(() => { currentIdx++; isAnswered = false; loadQuestion(); }, 2500);
         }
 
         function showResult() {
             document.getElementById('game-area').classList.add('hidden');
             document.getElementById('result-area').classList.remove('hidden');
-            
             document.getElementById('result-title-display').innerText = settings.title;
             document.getElementById('result-name').innerText = studentName;
-            
-            const finalScore = Math.round((score / questionsData.length) * 100);
-            document.getElementById('final-score').innerText = finalScore;
-            
+            document.getElementById('final-score').innerText = Math.round((score / questionsData.length) * 100);
             const d = new Date();
             document.getElementById('finish-date').innerText = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
-            
             victorySound.play();
-            launchConfetti();
-        }
-
-        function launchConfetti() {
-            var duration = 3000;
-            var end = Date.now() + duration;
-            (function frame() {
-                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
-                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
-                if (Date.now() < end) requestAnimationFrame(frame);
-            }());
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
     </script>
 </body>

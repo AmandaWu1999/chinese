@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gemini 台灣生詞大富翁 (V7現金為王)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Roboto:wght@500;900&display=swap');
+        @keyframes pop { 0% { transform: scale(0.9); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes pulse-red { 0% { color: #ef4444; } 50% { color: #991b1b; } 100% { color: #ef4444; } }
+
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f0f2f5; overflow: hidden; touch-action: manipulation; }
+        .credit-footer { position: fixed; bottom: 4px; right: 8px; font-size: 0.7rem; color: rgba(0,0,0,0.4); pointer-events: none; z-index: 9999; background: rgba(255,255,255,0.8); padding: 2px 6px; border-radius: 4px; }
+
+        /* 棋盤格線 */
+        .board-grid {
+            display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+            gap: 3px; width: 98%; max-width: 750px; aspect-ratio: 1/1; margin: 0 auto;
+            background-color: #fff; padding: 3px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px;
+        }
+        .cell {
+            position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-radius: 4px; font-size: 0.7rem; background: white; text-align: center; border: 3px solid #ddd; box-shadow: inset 0 0 5px rgba(0,0,0,0.02);
+        }
+        /* Colors */
+        .border-g-red { border-color: #EA4335; }
+        .border-g-blue { border-color: #4285F4; }
+        .border-g-yellow { border-color: #FBBC05; }
+        .border-g-green { border-color: #34A853; }
+        
+        .snack-cell { background-color: #fffdf0; border-style: dashed; }
+        .money-cell { background-color: #fehoc7; border-color: #fbbf24; border-style: double; border-width: 4px; }
+
+        .center-area {
+            grid-column: 2 / 8; grid-row: 2 / 8; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: white; z-index: 10; padding: 10px; text-align: center;
+        }
+        .gemini-logo {
+            font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 3rem;
+            background: linear-gradient(90deg, #4285F4, #EA4335, #FBBC05, #34A853);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px;
+        }
+
+        /* 棋子樣式 */
+        .token {
+            width: 24px; height: 24px; border-radius: 50%; position: absolute; z-index: 20;
+            border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 14px;
+            display: flex; justify-content: center; align-items: center; background: white; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .token.p1 { top: -6px; left: -6px; border-color: #EA4335; }
+        .token.p2 { bottom: -6px; right: -6px; border-color: #4285F4; }
+        .token.p3 { top: -6px; right: -6px; border-color: #34A853; }
+        .owner-mark { position: absolute; top:0;left:0;right:0;bottom:0; border: 4px solid transparent; opacity: 0.3; pointer-events: none; }
+
+        /* Modals */
+        .modal { position: fixed; top:0;left:0;width:100%;height:100%; z-index: 100; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .modal.active { opacity: 1; pointer-events: auto; }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 1rem; width: 95%; max-width: 450px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: pop 0.3s; }
+        .timer-urgent { animation: pulse-red 1s infinite; color: #ef4444; font-weight: bold; }
+    </style>
+</head>
+<body class="h-screen flex flex-col items-center justify-center">
+    <div class="credit-footer">提供者: 台師大吳穎純老師</div>
+
+    <div id="setup-screen" class="absolute inset-0 bg-white z-50 flex flex-col items-center p-4 overflow-y-auto">
+        <div class="max-w-md w-full space-y-3 my-2">
+             <h1 class="text-3xl font-black text-center">
+                <span class="text-[#4285F4]">G</span><span class="text-[#EA4335]">e</span><span class="text-[#FBBC05]">m</span><span class="text-[#4285F4]">i</span><span class="text-[#34A853]">n</span><span class="text-[#EA4335]">i</span>
+                <span class="text-gray-700">台灣大富翁</span>
+            </h1>
+            
+            <div class="flex justify-between items-center bg-gray-100 p-2 rounded-lg">
+                <label class="font-bold text-gray-700 ml-2">玩家人數：</label>
+                <select id="player-count" onchange="togglePlayerInputs()" class="border-2 border-gray-300 rounded-lg p-1 text-lg font-bold">
+                    <option value="2">2 人對戰</option>
+                    <option value="3">3 人對戰</option>
+                </select>
+            </div>
+
+            <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 grid grid-cols-2 gap-2" id="player-setup-box">
+                <div class="bg-white p-2 rounded border col-span-1">
+                    <label class="block text-xs font-bold text-red-600">P1 名字</label>
+                    <input type="text" id="p1-name" value="

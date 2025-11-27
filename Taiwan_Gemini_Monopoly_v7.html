@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gemini 台灣生詞大富翁 (V5現金決胜版)</title>
+    <title>Gemini 台灣生詞大富翁 (V7現金為王)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -118,7 +118,7 @@
         <div class="board-grid" id="board">
             <div class="center-area">
                 <div class="gemini-logo text-4xl mb-1">Gemini</div>
-                <div class="text-gray-500 text-xs mb-3 font-bold">台灣生詞大富翁 (現金決胜)</div>
+                <div class="text-gray-500 text-xs mb-3 font-bold">台灣生詞大富翁 (現金為王)</div>
                 <div class="text-5xl mb-2 transition-transform" id="dice-display">🎲</div>
                 <button id="roll-btn" onclick="rollDice()" class="px-6 py-2 bg-[#4285F4] text-white rounded-full text-lg font-bold shadow-md hover:bg-[#3367d6] transition disabled:opacity-50">擲骰子</button>
                 <div id="msg-box" class="mt-2 text-center text-xs font-medium text-gray-600 h-6"></div>
@@ -130,7 +130,7 @@
     
     <div id="scholarship-modal" class="modal"><div class="modal-content">
         <div class="text-5xl mb-2">🎓</div>
-        <div class="text-3xl font-bold text-blue-600 mb-2">勤學獎學金</div>
+        <div class="text-3xl font-bold text-blue-600 mb-2">獎學金</div>
         <p class="text-gray-600 mb-4 text-sm">雖然錢不夠買地，<br>但答對題目值得鼓勵！</p>
         <div class="text-4xl font-black text-green-600 mb-6">+$50</div>
         <button onclick="closeModal('scholarship-modal'); nextTurn();" class="bg-blue-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg hover:bg-blue-600">收下鼓勵</button>
@@ -378,5 +378,5 @@
             document.getElementById('game-over-modal').classList.add('active');
         }
     </script>
-</body>
+    </body>
 </html>

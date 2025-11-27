@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gemini 台灣生詞大富翁 (藝術文化版)</title>
+    <title>Gemini 台灣生詞大富翁 (V6版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -57,7 +57,7 @@
         /* Modals */
         .modal { position: fixed; top:0;left:0;width:100%;height:100%; z-index: 100; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal.active { opacity: 1; pointer-events: auto; }
-        .modal-content { background: white; padding: 1.5rem; border-radius: 1rem; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: pop 0.3s; }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 1rem; width: 95%; max-width: 450px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: pop 0.3s; }
         .timer-urgent { animation: pulse-red 1s infinite; color: #ef4444; font-weight: bold; }
     </style>
 </head>
@@ -139,59 +139,25 @@
     <div id="snack-modal" class="modal"><div class="modal-content"><div class="text-5xl mb-2" id="snack-icon"></div><h2 class="text-2xl font-bold mb-1" id="snack-name"></h2><p class="text-gray-600 mb-4">花費 <span class="text-red-500 font-bold">$70</span>！<br>請選擇技能：</p><div class="grid grid-cols-2 gap-3"><button onclick="useSnackAbility('steal')" class="bg-red-500 text-white p-3 rounded-xl font-bold hover:bg-red-600 flex flex-col items-center"><span class="text-2xl mb-1">😈</span>美味搶奪<span class="text-xs font-normal">搶錢</span></button><button onclick="useSnackAbility('move')" class="bg-green-500 text-white p-3 rounded-xl font-bold hover:bg-green-600 flex flex-col items-center"><span class="text-2xl mb-1">💨</span>吃飽快跑<span class="text-xs font-normal">再移動</span></button></div></div></div>
     <div id="buy-modal" class="modal"><div class="modal-content"><div class="text-4xl mb-2">🎉 答對了！</div><h3 class="text-gray-500 text-sm">獲得購買權</h3><h2 id="buy-name" class="text-3xl font-bold mb-1 mt-2"></h2><div class="bg-blue-50 p-3 rounded-lg mb-4 mt-2 inline-block border-2 border-blue-200"><span class="text-sm text-gray-600">價格:</span><span id="land-price" class="text-2xl font-bold text-blue-700 ml-2"></span></div><div class="flex gap-3 justify-center"><button id="buy-confirm-btn" class="bg-blue-600 text-white py-2 px-8 rounded-lg font-bold shadow-md">購買</button><button onclick="closeModal('buy-modal'); nextTurn();" class="bg-gray-300 text-gray-700 py-2 px-6 rounded-lg font-bold">放棄</button></div></div></div>
     <div id="earn-modal" class="modal"><div class="modal-content"><div class="text-5xl mb-2">💰</div><div class="text-3xl font-bold text-yellow-600 mb-2">恭喜發財！</div><p class="text-gray-600 mb-4 text-lg">答對問題，獲得獎金</p><div class="text-4xl font-black text-green-600 mb-6">+$150</div><button onclick="closeModal('earn-modal'); nextTurn();" class="bg-yellow-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg hover:bg-yellow-600">收下獎勵</button></div></div>
-    <div id="game-over-modal" class="modal"><div class="modal-content relative overflow-hidden"><h1 class="text-3xl font-black mb-2 text-gray-800">🏆 遊戲結束</h1><div class="text-7xl mb-2" id="winner-avatar"></div><p id="winner-text" class="text-2xl font-bold mb-1">獲勝者</p><p id="win-reason" class="text-gray-500 text-sm mb-4"></p><p id="win-detail" class="text-blue-600 font-bold text-xl mb-6"></p><button onclick="location.reload()" class="bg-gradient-to-r from-blue-500 to-green-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg">再來一局</button></div></div>
+    
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content relative overflow-hidden">
+            <h1 class="text-2xl font-black mb-1 text-gray-800">🏆 遊戲結束</h1>
+            <div class="text-6xl mb-2" id="winner-avatar"></div>
+            <p id="winner-text" class="text-2xl font-bold mb-1">獲勝者</p>
+            <p id="win-reason" class="text-gray-500 text-sm mb-4"></p>
+            <div id="win-detail-container" class="mb-4"></div>
+            <button onclick="location.reload()" class="bg-gradient-to-r from-blue-500 to-green-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg w-full">再來一局</button>
+        </div>
+    </div>
 
     <script>
-        const rawMapData = [{t:'city',n:'基隆',icon:'🏞️',price:260},{t:'snack',n:'珍珠奶茶',icon:'🧋'},{t:'city',n:'台北',icon:'🏞️',price:300},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'新北',icon:'🏞️',price:280},{t:'snack',n:'蛋餅',icon:'🍳'},{t:'city',n:'桃園',icon:'🏞️',price:240},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'新竹',icon:'🏞️',price:250},{t:'snack',n:'蚵仔煎',icon:'🦪'},{t:'city',n:'台中',icon:'🏞️',price:270},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'南投',icon:'🏞️',price:190},{t:'snack',n:'擔仔麵',icon:'🍜'},{t:'city',n:'台南',icon:'🏞️',price:260},{t:'city',n:'嘉義',icon:'🏞️',price:200},{t:'snack',n:'臭豆腐',icon:'🟨'},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'高雄',icon:'🏞️',price:280},{t:'snack',n:'牛肉麵',icon:'🥩'},{t:'city',n:'屏東',icon:'🏞️',price:220},{t:'city',n:'台東',icon:'🏞️',price:190},{t:'snack',n:'烏龍茶',icon:'🍵'},{t:'city',n:'花蓮',icon:'🏞️',price:210},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'宜蘭',icon:'🏞️',price:230},{t:'city',n:'澎湖',icon:'🏞️',price:170},{t:'city',n:'金馬',icon:'🏞️',price:150}];
+        const rawMapData = [{t:'city',n:'基隆',icon:'🏞️',price:260},{t:'snack',n:'珍珠奶茶',icon:'🧋'},{t:'city',n:'台北',icon:'🏞️',price:300},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'新北',icon:'🏞️',price:280},{t:'snack',n:'蛋餅',icon:'🍳'},{t:'city',n:'桃園',icon:'🏞️',price:240},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'新竹',icon:'🏞️',price:250},{t:'snack',n:'蚵仔煎',icon:'🦪'},{t:'city',n:'台中',icon:'🏞️',price:270},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'南投',icon:'🏞️',price:190},{t:'snack',n:'擔仔麵',icon:'🍜'},{t:'city',n:'台南',icon:'🏞️',price:260},{t:'city',n:'嘉義',icon:'🏞️',price:200},{t:'snack',n:'臭豆腐',icon:'🟨'},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'高雄',icon:'🏞️',price:280},{t:'snack',n:'牛肉麵',icon:'🥩'},{t:'city',n:'屏東',icon:'🏞️',price:220},{t:'city',n:'台東',icon:'🏞️',price:190},{t:'snack',n:'烏龍茶',icon:'🍵'},{t:'city',n:'花蓮',icon:'🏞️',price:210},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'宜蘭',icon:'🏞️',price:230},{t:'city',n:'澎湖',icon:'🏞️',price:170},{t:'city',n:'金馬',icon:'🏞️',price:150}];
         const borderColors = ['border-g-red', 'border-g-blue', 'border-g-yellow', 'border-g-green'];
         const sounds = { dice: new Audio('https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3'), buy: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'), pay: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'), win: new Audio('https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3'), eat: new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3') };
         Object.values(sounds).forEach(s => s.volume = 0.4);
         
-        // 更新預設題庫
-        const defaultVocab = `場,chǎng
-強調,qiángdiào
-團體,tuántǐ
-千萬,qiānwàn
-鋼琴,gāngqín
-小提琴,xiǎotíqín
-古典,gǔdiǎn
-畫家,huàjiā
-畫,huà
-舞蹈,wǔdǎo
-文學,wénxué
-繪畫,huìhuà
-等,děng
-寺廟,sìmiào
-表現,biǎoxiàn
-之,zhī
-劇情,jùqíng
-導演,dǎoyǎn
-所,suǒ
-紅,hóng
-明星,míngxīng
-演技,yǎnjì
-得,dé
-獎,jiǎng
-廣場,guǎngchǎng
-或,huò
-仔細,zǐxì
-留意,liúyì
-處處,chùchù
-滿足,mǎnzú
-豐盛,fēngshèng
-國家戲劇院,Guójiā Xìjùyuàn
-雲門舞集,Yúnmén Wǔjí
-國家音樂廳,Guójiā Yīnyuètīng
-金馬影展,Jīnmǎ Yǐngzhǎn
-現代舞,xiàndài wǔ
-無人不知,wúrén bùzhī
-百聞不如一見,bǎiwén bùrú yíjiàn
-老街,lǎojiē
-街頭藝術,jiētóu yìshù
-裝置藝術,zhuāngzhì yìshù
-填飽,tiánbǎo
-口腹之慾,kǒufù zhīyù`;
-        
+        const defaultVocab = `場,chǎng\n強調,qiángdiào\n團體,tuántǐ\n千萬,qiānwàn\n鋼琴,gāngqín\n小提琴,xiǎotíqín\n古典,gǔdiǎn\n畫家,huàjiā\n畫,huà\n舞蹈,wǔdǎo\n文學,wénxué\n繪畫,huìhuà\n等,děng\n寺廟,sìmiào\n表現,biǎoxiàn\n之,zhī\n劇情,jùqíng\n導演,dǎoyǎn\n所,suǒ\n紅,hóng\n明星,míngxīng\n演技,yǎnjì\n得,dé\n獎,jiǎng\n廣場,guǎngchǎng\n或,huò\n仔細,zǐxì\n留意,liúyì\n處處,chùchù\n滿足,mǎnzú\n豐盛,fēngshèng\n國家戲劇院,Guójiā Xìjùyuàn\n雲門舞集,Yúnmén Wǔjí\n國家音樂廳,Guójiā Yīnyuètīng\n金馬影展,Jīnmǎ Yǐngzhǎn\n現代舞,xiàndài wǔ\n無人不知,wúrén bùzhī\n百聞不如一見,bǎiwén bùrú yíjiàn\n老街,lǎojiē\n街頭藝術,jiētóu yìshù\n裝置藝術,zhuāngzhì yìshù\n填飽,tiánbǎo\n口腹之慾,kǒufù zhīyù`;
         document.getElementById('vocab-input').value = defaultVocab;
 
         let tiles=[], players=[], turn=0, rolling=false, timer=null, timeLeft=600, vocabList=[], pendingTile=null;
@@ -217,11 +183,12 @@
             const pCount = document.getElementById('player-count').value;
             timeLeft = (parseInt(document.getElementById('game-duration').value)||10)*60;
             
+            // 更新：初始金額改為 2000
             players = [
-                {id:0, n:document.getElementById('p1-name').value, av:document.getElementById('p1-avatar').value, m:1000, pos:0, color:'#EA4335', css:'p1', text:'text-red-600', assets:0},
-                {id:1, n:document.getElementById('p2-name').value, av:document.getElementById('p2-avatar').value, m:1000, pos:0, color:'#4285F4', css:'p2', text:'text-blue-600', assets:0}
+                {id:0, n:document.getElementById('p1-name').value, av:document.getElementById('p1-avatar').value, m:2000, pos:0, color:'#EA4335', css:'p1', text:'text-red-600', landValue:0, totalAssets:0},
+                {id:1, n:document.getElementById('p2-name').value, av:document.getElementById('p2-avatar').value, m:2000, pos:0, color:'#4285F4', css:'p2', text:'text-blue-600', landValue:0, totalAssets:0}
             ];
-            if(pCount === '3') players.push({id:2, n:document.getElementById('p3-name').value, av:document.getElementById('p3-avatar').value, m:1000, pos:0, color:'#34A853', css:'p3', text:'text-green-600', assets:0});
+            if(pCount === '3') players.push({id:2, n:document.getElementById('p3-name').value, av:document.getElementById('p3-avatar').value, m:2000, pos:0, color:'#34A853', css:'p3', text:'text-green-600', landValue:0, totalAssets:0});
 
             tiles = rawMapData.map((d,i) => ({...d, id:i, owner:null, borderColor: borderColors[i%4]}));
             renderBoard(); renderTopBar(); updateStats(); updateTurn(); startTimer();
@@ -232,7 +199,7 @@
             const bar = document.getElementById('stats-bar');
             let html = '';
             players.forEach(p => {
-                html += `<div class="flex items-center gap-1 bg-gray-50 p-1 rounded border-l-4" style="border-color:${p.color}; min-width:90px;"><div class="text-xl">${p.av}</div><div class="leading-none"><div class="text-[10px] text-gray-500 truncate w-12">${p.n}</div><div class="font-bold text-sm ${p.text}">$<span id="p${p.id}-m">1000</span></div></div></div>`;
+                html += `<div class="flex items-center gap-1 bg-gray-50 p-1 rounded border-l-4" style="border-color:${p.color}; min-width:90px;"><div class="text-xl">${p.av}</div><div class="leading-none"><div class="text-[10px] text-gray-500 truncate w-12">${p.n}</div><div class="font-bold text-sm ${p.text}">$<span id="p${p.id}-m">${p.m}</span></div></div></div>`;
             });
             html += `<div class="flex flex-col items-center mx-auto"><div id="timer-box" class="bg-gray-800 text-white px-2 py-0.5 rounded font-mono font-bold text-sm mb-1">10:00</div><div id="turn-ind" class="text-[10px] px-2 py-0.5 bg-gray-200 rounded-full whitespace-nowrap">準備</div></div>`;
             bar.innerHTML = html;
@@ -318,7 +285,6 @@
                 } else if(pendingTile.t === 'snack') { 
                     p.m -= 70; updateStats(); sounds.eat.play(); setTimeout(() => showSnackModal(pendingTile), 800); 
                 } else {
-                    // 買地檢查：錢不夠發獎學金
                     if(p.m < pendingTile.price) {
                         p.m += 50; updateStats(); sounds.buy.play();
                         document.getElementById('scholarship-modal').classList.add('active');
@@ -366,36 +332,43 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         function nextTurn() { turn=(turn+1)%players.length; updateTurn(); }
 
-        function calculateAssets(p) {
-            let landVal = tiles.filter(t => t.owner === p.id).reduce((sum, t) => sum + t.price, 0);
-            return p.m + landVal;
-        }
-
+        // 更新：核心結算邏輯
         function endGame(reason) {
             clearInterval(timer); sounds.win.play(); confetti({particleCount:100,spread:70,origin:{y:0.6}});
             
-            // 計算所有玩家總資產
-            players.forEach(p => p.assets = calculateAssets(p));
+            // 1. 計算所有人的總資產
+            players.forEach(p => {
+                p.landValue = tiles.filter(t => t.owner === p.id).reduce((sum, t) => sum + t.price, 0);
+                p.totalAssets = p.m + p.landValue;
+            });
             
-            // 排序 (資產多 -> 少)
-            const ranked = [...players].sort((a,b) => b.assets - a.assets);
-            const win = ranked[0];
+            // 2. 排序找出贏家 (總資產最高者)
+            const ranked = [...players].sort((a,b) => b.totalAssets - a.totalAssets);
+            const winner = ranked[0];
+            const isDraw = ranked[0].totalAssets === ranked[1].totalAssets;
 
-            let reasonTxt = "";
-            let detailTxt = "";
+            // 3. 設定結算標題與原因
+            let reasonTxt = (reason === 'time') ? "時間到！" : "有人破產！";
+            reasonTxt += "依總資產結算";
 
-            if(reason === 'time') {
-                reasonTxt = "時間到！結算總資產 (現金+地產)";
-                detailTxt = `總資產：$${win.assets}`;
-            } else {
-                reasonTxt = `${players.find(p=>p.m<0).n} 破產`;
-                detailTxt = `${win.n} 存活獲勝`;
-            }
+            document.getElementById('winner-avatar').innerText = isDraw ? '🤝' : winner.av;
+            document.getElementById('winner-text').innerText = isDraw ? '平手！' : `${winner.n} 獲勝!`;
+            document.getElementById('win-reason').innerText = reasonTxt;
 
-            document.getElementById('winner-avatar').innerText=win.av; 
-            document.getElementById('winner-text').innerText=`${win.n} 獲勝!`;
-            document.getElementById('win-reason').innerText=reasonTxt;
-            document.getElementById('win-detail').innerText=detailTxt;
+            // 4. 生成詳細結算清單 HTML
+            let detailsHtml = '<div class="w-full text-sm bg-gray-50 p-3 rounded-xl mb-4 text-left">';
+            ranked.forEach(p => {
+                 detailsHtml += `
+                 <div class="flex justify-between items-center border-b border-gray-200 py-2 ${p.id === winner.id && !isDraw ? 'font-bold text-blue-600' : 'text-gray-700'}">
+                    <div class="flex items-center gap-1">${p.av} ${p.n}</div>
+                    <div class="text-right">
+                        <div>現金 $${p.m} + 房產 $${p.landValue}</div>
+                        <div class="text-lg">= 總資產 $${p.totalAssets}</div>
+                    </div>
+                 </div>`;
+            });
+            detailsHtml += '</div>';
+            document.getElementById('win-detail-container').innerHTML = detailsHtml;
             
             document.getElementById('game-over-modal').classList.add('active');
         }

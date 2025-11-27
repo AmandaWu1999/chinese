@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gemini 台灣生詞大富翁 (V7現金為王)</title>
+    <title>Gemini 台灣生詞大富翁 (V5現金決胜版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -82,4 +82,301 @@
             <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 grid grid-cols-2 gap-2" id="player-setup-box">
                 <div class="bg-white p-2 rounded border col-span-1">
                     <label class="block text-xs font-bold text-red-600">P1 名字</label>
-                    <input type="text" id="p1-name" value="
+                    <input type="text" id="p1-name" value="老師" class="w-full border rounded text-xs p-1 mb-1">
+                    <select id="p1-avatar" class="w-full border rounded text-lg"><option>👩‍🏫</option><option>🦁</option><option>🐯</option></select>
+                </div>
+                <div class="bg-white p-2 rounded border col-span-1">
+                    <label class="block text-xs font-bold text-blue-600">P2 名字</label>
+                    <input type="text" id="p2-name" value="學生A" class="w-full border rounded text-xs p-1 mb-1">
+                    <select id="p2-avatar" class="w-full border rounded text-lg"><option>👨‍🎓</option><option>🦊</option><option>🐶</option></select>
+                </div>
+                <div id="p3-setup" class="bg-white p-2 rounded border col-span-1 hidden">
+                    <label class="block text-xs font-bold text-green-600">P3 名字</label>
+                    <input type="text" id="p3-name" value="學生B" class="w-full border rounded text-xs p-1 mb-1">
+                    <select id="p3-avatar" class="w-full border rounded text-lg"><option>🤖</option><option>🚀</option><option>🐱</option></select>
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 p-2 rounded-xl border border-yellow-200 flex items-center justify-between px-4">
+                <label class="font-bold text-yellow-800 text-sm">⏰ 遊戲時間(分)</label>
+                <input type="number" id="game-duration" value="10" min="1" max="60" class="w-16 p-1 border border-yellow-400 rounded-lg text-lg text-center font-bold">
+            </div>
+
+            <div class="bg-green-50 p-2 rounded-xl border border-green-200">
+                <label class="block font-bold text-green-800 mb-1 text-sm">📚 題目 (生詞,拼音)</label>
+                <textarea id="vocab-input" rows="4" class="w-full p-2 border border-green-300 rounded font-mono text-xs" placeholder="場,chǎng..."></textarea>
+            </div>
+
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white font-bold py-3 rounded-xl text-xl shadow-lg hover:scale-[1.02] transition">🚀 建立題庫並開始 (初始$2000)</button>
+        </div>
+    </div>
+
+    <div id="game-container" class="hidden w-full h-full p-2 flex flex-col items-center justify-start relative">
+        <div id="stats-bar" class="w-full max-w-[750px] flex justify-between items-center mb-2 px-1 gap-2 bg-white p-2 rounded-xl shadow-sm overflow-x-auto">
+            </div>
+
+        <div class="board-grid" id="board">
+            <div class="center-area">
+                <div class="gemini-logo text-4xl mb-1">Gemini</div>
+                <div class="text-gray-500 text-xs mb-3 font-bold">台灣生詞大富翁 (現金決胜)</div>
+                <div class="text-5xl mb-2 transition-transform" id="dice-display">🎲</div>
+                <button id="roll-btn" onclick="rollDice()" class="px-6 py-2 bg-[#4285F4] text-white rounded-full text-lg font-bold shadow-md hover:bg-[#3367d6] transition disabled:opacity-50">擲骰子</button>
+                <div id="msg-box" class="mt-2 text-center text-xs font-medium text-gray-600 h-6"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-modal" class="modal"><div class="modal-content"><div class="text-xs text-blue-500 font-bold mb-1" id="quiz-context">問題</div><h2 id="quiz-word" class="text-4xl font-bold mb-6 text-gray-800">生詞</h2><div id="quiz-options" class="space-y-2"></div></div></div>
+    
+    <div id="scholarship-modal" class="modal"><div class="modal-content">
+        <div class="text-5xl mb-2">🎓</div>
+        <div class="text-3xl font-bold text-blue-600 mb-2">勤學獎學金</div>
+        <p class="text-gray-600 mb-4 text-sm">雖然錢不夠買地，<br>但答對題目值得鼓勵！</p>
+        <div class="text-4xl font-black text-green-600 mb-6">+$50</div>
+        <button onclick="closeModal('scholarship-modal'); nextTurn();" class="bg-blue-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg hover:bg-blue-600">收下鼓勵</button>
+    </div></div>
+
+    <div id="snack-modal" class="modal"><div class="modal-content"><div class="text-5xl mb-2" id="snack-icon"></div><h2 class="text-2xl font-bold mb-1" id="snack-name"></h2><p class="text-gray-600 mb-4">花費 <span class="text-red-500 font-bold">$70</span>！<br>請選擇技能：</p><div class="grid grid-cols-2 gap-3"><button onclick="useSnackAbility('steal')" class="bg-red-500 text-white p-3 rounded-xl font-bold hover:bg-red-600 flex flex-col items-center"><span class="text-2xl mb-1">😈</span>美味搶奪<span class="text-xs font-normal">搶錢</span></button><button onclick="useSnackAbility('move')" class="bg-green-500 text-white p-3 rounded-xl font-bold hover:bg-green-600 flex flex-col items-center"><span class="text-2xl mb-1">💨</span>吃飽快跑<span class="text-xs font-normal">再移動</span></button></div></div></div>
+    <div id="buy-modal" class="modal"><div class="modal-content"><div class="text-4xl mb-2">🎉 答對了！</div><h3 class="text-gray-500 text-sm">獲得購買權</h3><h2 id="buy-name" class="text-3xl font-bold mb-1 mt-2"></h2><div class="bg-blue-50 p-3 rounded-lg mb-4 mt-2 inline-block border-2 border-blue-200"><span class="text-sm text-gray-600">價格:</span><span id="land-price" class="text-2xl font-bold text-blue-700 ml-2"></span></div><div class="flex gap-3 justify-center"><button id="buy-confirm-btn" class="bg-blue-600 text-white py-2 px-8 rounded-lg font-bold shadow-md">購買</button><button onclick="closeModal('buy-modal'); nextTurn();" class="bg-gray-300 text-gray-700 py-2 px-6 rounded-lg font-bold">放棄</button></div></div></div>
+    <div id="earn-modal" class="modal"><div class="modal-content"><div class="text-5xl mb-2">💰</div><div class="text-3xl font-bold text-yellow-600 mb-2">恭喜發財！</div><p class="text-gray-600 mb-4 text-lg">答對問題，獲得獎金</p><div class="text-4xl font-black text-green-600 mb-6">+$150</div><button onclick="closeModal('earn-modal'); nextTurn();" class="bg-yellow-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg hover:bg-yellow-600">收下獎勵</button></div></div>
+    
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content relative overflow-hidden">
+            <h1 class="text-2xl font-black mb-1 text-gray-800">🏆 遊戲結束</h1>
+            <div class="text-6xl mb-2" id="winner-avatar"></div>
+            <p id="winner-text" class="text-2xl font-bold mb-1">獲勝者</p>
+            <p id="win-reason" class="text-gray-500 text-sm mb-4"></p>
+            <div id="win-detail-container" class="mb-4"></div>
+            <button onclick="location.reload()" class="bg-gradient-to-r from-blue-500 to-green-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg w-full">再來一局</button>
+        </div>
+    </div>
+
+    <script>
+        const rawMapData = [{t:'city',n:'基隆',icon:'🏞️',price:260},{t:'snack',n:'珍珠奶茶',icon:'🧋'},{t:'city',n:'台北',icon:'🏞️',price:300},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'新北',icon:'🏞️',price:280},{t:'snack',n:'蛋餅',icon:'🍳'},{t:'city',n:'桃園',icon:'🏞️',price:240},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'新竹',icon:'🏞️',price:250},{t:'snack',n:'蚵仔煎',icon:'🦪'},{t:'city',n:'台中',icon:'🏞️',price:270},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'南投',icon:'🏞️',price:190},{t:'snack',n:'擔仔麵',icon:'🍜'},{t:'city',n:'台南',icon:'🏞️',price:260},{t:'city',n:'嘉義',icon:'🏞️',price:200},{t:'snack',n:'臭豆腐',icon:'🟨'},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'高雄',icon:'🏞️',price:280},{t:'snack',n:'牛肉麵',icon:'🥩'},{t:'city',n:'屏東',icon:'🏞️',price:220},{t:'city',n:'台東',icon:'🏞️',price:190},{t:'snack',n:'烏龍茶',icon:'🍵'},{t:'city',n:'花蓮',icon:'🏞️',price:210},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'宜蘭',icon:'🏞️',price:230},{t:'city',n:'澎湖',icon:'🏞️',price:170},{t:'city',n:'金馬',icon:'🏞️',price:150}];
+        const borderColors = ['border-g-red', 'border-g-blue', 'border-g-yellow', 'border-g-green'];
+        const sounds = { dice: new Audio('https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3'), buy: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'), pay: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'), win: new Audio('https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3'), eat: new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3') };
+        Object.values(sounds).forEach(s => s.volume = 0.4);
+        
+        const defaultVocab = `場,chǎng\n強調,qiángdiào\n團體,tuántǐ\n千萬,qiānwàn\n鋼琴,gāngqín\n小提琴,xiǎotíqín\n古典,gǔdiǎn\n畫家,huàjiā\n畫,huà\n舞蹈,wǔdǎo\n文學,wénxué\n繪畫,huìhuà\n等,děng\n寺廟,sìmiào\n表現,biǎoxiàn\n之,zhī\n劇情,jùqíng\n導演,dǎoyǎn\n所,suǒ\n紅,hóng\n明星,míngxīng\n演技,yǎnjì\n得,dé\n獎,jiǎng\n廣場,guǎngchǎng\n或,huò\n仔細,zǐxì\n留意,liúyì\n處處,chùchù\n滿足,mǎnzú\n豐盛,fēngshèng\n國家戲劇院,Guójiā Xìjùyuàn\n雲門舞集,Yúnmén Wǔjí\n國家音樂廳,Guójiā Yīnyuètīng\n金馬影展,Jīnmǎ Yǐngzhǎn\n現代舞,xiàndài wǔ\n無人不知,wúrén bùzhī\n百聞不如一見,bǎiwén bùrú yíjiàn\n老街,lǎojiē\n街頭藝術,jiētóu yìshù\n裝置藝術,zhuāngzhì yìshù\n填飽,tiánbǎo\n口腹之慾,kǒufù zhīyù`;
+        document.getElementById('vocab-input').value = defaultVocab;
+
+        let tiles=[], players=[], turn=0, rolling=false, timer=null, timeLeft=600, vocabList=[], pendingTile=null;
+
+        function togglePlayerInputs() {
+            const count = document.getElementById('player-count').value;
+            const p3Box = document.getElementById('p3-setup');
+            const setupBox = document.getElementById('player-setup-box');
+            if(count === '3') {
+                p3Box.classList.remove('hidden'); setupBox.classList.remove('grid-cols-2'); setupBox.classList.add('grid-cols-3');
+            } else {
+                p3Box.classList.add('hidden'); setupBox.classList.add('grid-cols-2'); setupBox.classList.remove('grid-cols-3');
+            }
+        }
+
+        function startGame() {
+            const input = document.getElementById('vocab-input').value;
+            vocabList = input.trim().split('\n').map(l => {
+                const [w, p] = l.split(','); return { word: w?.trim(), pinyin: p?.trim() };
+            }).filter(v => v.word && v.pinyin);
+            if(vocabList.length < 3) { alert("請至少輸入 3 個生詞！"); return; }
+
+            const pCount = document.getElementById('player-count').value;
+            timeLeft = (parseInt(document.getElementById('game-duration').value)||10)*60;
+            
+            // 更新：初始金額改為 2000
+            players = [
+                {id:0, n:document.getElementById('p1-name').value, av:document.getElementById('p1-avatar').value, m:2000, pos:0, color:'#EA4335', css:'p1', text:'text-red-600'},
+                {id:1, n:document.getElementById('p2-name').value, av:document.getElementById('p2-avatar').value, m:2000, pos:0, color:'#4285F4', css:'p2', text:'text-blue-600'}
+            ];
+            if(pCount === '3') players.push({id:2, n:document.getElementById('p3-name').value, av:document.getElementById('p3-avatar').value, m:2000, pos:0, color:'#34A853', css:'p3', text:'text-green-600'});
+
+            tiles = rawMapData.map((d,i) => ({...d, id:i, owner:null, borderColor: borderColors[i%4]}));
+            renderBoard(); renderTopBar(); updateStats(); updateTurn(); startTimer();
+            document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('game-container').classList.remove('hidden');
+        }
+
+        function renderTopBar() {
+            const bar = document.getElementById('stats-bar');
+            let html = '';
+            players.forEach(p => {
+                html += `<div class="flex items-center gap-1 bg-gray-50 p-1 rounded border-l-4" style="border-color:${p.color}; min-width:90px;"><div class="text-xl">${p.av}</div><div class="leading-none"><div class="text-[10px] text-gray-500 truncate w-12">${p.n}</div><div class="font-bold text-sm ${p.text}">$<span id="p${p.id}-m">${p.m}</span></div></div></div>`;
+            });
+            html += `<div class="flex flex-col items-center mx-auto"><div id="timer-box" class="bg-gray-800 text-white px-2 py-0.5 rounded font-mono font-bold text-sm mb-1">10:00</div><div id="turn-ind" class="text-[10px] px-2 py-0.5 bg-gray-200 rounded-full whitespace-nowrap">準備</div></div>`;
+            bar.innerHTML = html;
+        }
+
+        function startTimer() { timer = setInterval(() => { timeLeft--; updateTimer(); if(timeLeft<=0) endGame('time'); }, 1000); updateTimer(); }
+        function updateTimer() {
+            const m=Math.floor(timeLeft/60).toString().padStart(2,'0'), s=(timeLeft%60).toString().padStart(2,'0');
+            const tb = document.getElementById('timer-box'); if(tb) tb.innerText = `${m}:${s}`;
+        }
+
+        function renderBoard() {
+            const board=document.getElementById('board'), center=document.querySelector('.center-area');
+            board.innerHTML=''; board.appendChild(center);
+            const pos=[]; for(let i=1;i<=8;i++)pos.push({r:1,c:i}); for(let i=2;i<=7;i++)pos.push({r:i,c:8}); for(let i=8;i>=1;i--)pos.push({r:8,c:i}); for(let i=7;i>=2;i--)pos.push({r:i,c:1});
+            tiles.forEach((t,i) => {
+                const el=document.createElement('div'); 
+                let extraClass = ''; if(t.t==='snack') extraClass='snack-cell'; if(t.t==='money') extraClass='money-cell';
+                el.className=`cell ${t.borderColor} ${extraClass}`; el.style.gridRow=pos[i].r; el.style.gridColumn=pos[i].c; el.id=`cell-${i}`;
+                if(t.t==='city') el.innerHTML = `<div class="text-lg">${t.icon}</div><div class="font-bold leading-tight">${t.n}</div><div class="text-xs font-bold mt-1 text-gray-400">$${t.price}</div>`;
+                else el.innerHTML = `<div class="text-2xl">${t.icon}</div><div class="font-bold text-xs text-amber-800 leading-tight">${t.n}</div>`;
+                el.innerHTML += `<div class="owner-mark" id="owner-${i}"></div>`;
+                board.appendChild(el);
+            });
+            drawTokens();
+        }
+        function drawTokens() { document.querySelectorAll('.token').forEach(e=>e.remove()); players.forEach(p=>{ document.getElementById(`cell-${p.pos}`).innerHTML += `<div class="token ${p.css}">${p.av}</div>`; }); }
+        function updateStats() { players.forEach(p => { const el = document.getElementById(`p${p.id}-m`); if(el) el.innerText = p.m; }); if(players.some(p=>p.m<0)) endGame('bankrupt'); }
+        function updateTurn() { 
+            const p=players[turn], ind=document.getElementById('turn-ind'); 
+            if(ind) ind.innerHTML=`輪到: <span class="font-bold" style="color:${p.color}">${p.av}</span>`;
+            document.getElementById('roll-btn').disabled=false; document.getElementById('msg-box').innerText=`${p.n} 請擲骰子`;
+        }
+
+        function rollDice() {
+            if(rolling) return; rolling=true; sounds.dice.play();
+            document.getElementById('roll-btn').disabled=true; const disp=document.getElementById('dice-display');
+            let c=0, roll=setInterval(()=>{ disp.innerText=['⚀','⚁','⚂','⚃','⚄','⚅'][Math.floor(Math.random()*6)]; if(++c>8){ clearInterval(roll); const step=Math.floor(Math.random()*6)+1; disp.innerText=['⚀','⚁','⚂','⚃','⚄','⚅'][step-1]; move(step); } },80);
+        }
+        function move(steps) {
+            const p=players[turn]; let c=0;
+            const mv=setInterval(()=>{ p.pos=(p.pos+1)%28; drawTokens(); if(++c>=steps){ clearInterval(mv); rolling=false; handleTile(p.pos); } },200);
+        }
+
+        function handleTile(pos) {
+            const t=tiles[pos], p=players[turn], msg=document.getElementById('msg-box');
+            if (t.t === 'money' || t.t === 'snack' || t.owner === null) {
+                if(t.t === 'money') msg.innerText = "機會！答對領獎金！";
+                else if(t.t === 'snack') msg.innerText = "美食時間！答對才能吃...";
+                else msg.innerText = "抵達空地，準備回答...";
+                pendingTile = t; setTimeout(showQuiz, 800);
+            } else if(t.owner===p.id) {
+                msg.innerText = "休息一下。"; setTimeout(nextTurn, 1000);
+            } else {
+                const fee=Math.round(t.price*0.5);
+                msg.innerHTML = `支付過路費 <span class="text-red-600 font-bold">$${fee}</span>`;
+                sounds.pay.play(); p.m-=fee; players[t.owner].m+=fee; updateStats();
+                document.getElementById(`cell-${pos}`).classList.add('bg-red-100');
+                setTimeout(()=>{document.getElementById(`cell-${pos}`).classList.remove('bg-red-100'); nextTurn();}, 1500);
+            }
+        }
+
+        function showQuiz() {
+            const modal = document.getElementById('quiz-modal'), t = pendingTile;
+            const q = vocabList[Math.floor(Math.random() * vocabList.length)];
+            let ctx = ""; if(t.t==='money') ctx="【賺錢】答對獲得 $150！"; else if(t.t==='snack') ctx=`【美食】想吃${t.n}嗎？`; else ctx=`【購買】想買${t.n}嗎？`;
+            document.getElementById('quiz-context').innerText = ctx; document.getElementById('quiz-word').innerText = q.word;
+            const optsEl = document.getElementById('quiz-options'); optsEl.innerHTML = '';
+            const ans = q.pinyin;
+            let dis = vocabList.filter(v=>v.pinyin!==ans).map(v=>v.pinyin).sort(()=>0.5-Math.random()).slice(0,2);
+            [ans, ...dis].sort(()=>0.5-Math.random()).forEach(opt => {
+                const btn = document.createElement('button'); btn.className = "w-full py-3 px-4 bg-gray-50 hover:bg-blue-100 border border-gray-200 rounded-lg text-lg font-medium transition text-left";
+                btn.innerText = opt; btn.onclick = () => handleQuizResult(opt === ans); optsEl.appendChild(btn);
+            });
+            modal.classList.add('active');
+        }
+
+        function handleQuizResult(correct) {
+            closeModal('quiz-modal'); const p = players[turn];
+            if(correct) {
+                if(pendingTile.t === 'money') { 
+                    p.m += 150; updateStats(); sounds.buy.play(); document.getElementById('earn-modal').classList.add('active'); 
+                } else if(pendingTile.t === 'snack') { 
+                    p.m -= 70; updateStats(); sounds.eat.play(); setTimeout(() => showSnackModal(pendingTile), 800); 
+                } else {
+                    if(p.m < pendingTile.price) {
+                        p.m += 50; updateStats(); sounds.buy.play();
+                        document.getElementById('scholarship-modal').classList.add('active');
+                    } else {
+                        showBuyModal(pendingTile);
+                    }
+                }
+            } else {
+                document.getElementById('msg-box').innerText = "答錯了..."; setTimeout(nextTurn, 1500);
+            }
+        }
+
+        function showSnackModal(t) {
+            document.getElementById('snack-icon').innerText=t.icon; document.getElementById('snack-name').innerText=t.n;
+            document.getElementById('snack-modal').classList.add('active');
+        }
+        function useSnackAbility(type) {
+            closeModal('snack-modal'); const p=players[turn], msg=document.getElementById('msg-box');
+            if(type==='steal') {
+                let totalStolen = 0;
+                players.forEach(opp => {
+                    if(opp.id !== p.id) {
+                        const stealAmt = (players.length === 3) ? 70 : 140;
+                        opp.m -= stealAmt; totalStolen += stealAmt;
+                    }
+                });
+                p.m += totalStolen; msg.innerHTML = `搶奪 <span class="font-bold text-green-600">$${totalStolen}</span>`; updateStats(); setTimeout(nextTurn, 1500);
+            } else {
+                msg.innerText = "吃飽快跑！"; setTimeout(()=>{ rolling=true; move(Math.floor(Math.random()*6)+1); }, 1000);
+            }
+        }
+
+        function showBuyModal(t) {
+            const p=players[turn], btn=document.getElementById('buy-confirm-btn');
+            document.getElementById('buy-name').innerText=t.n; document.getElementById('land-price').innerText=`$${t.price}`; 
+            btn.onclick=()=>buyLand(t); btn.disabled=false; btn.innerText="購買"; btn.classList.remove('bg-gray-400');
+            document.getElementById('buy-modal').classList.add('active');
+        }
+        function buyLand(t) {
+            closeModal('buy-modal'); sounds.buy.play(); const p=players[turn]; p.m-=t.price; t.owner=p.id;
+            const mk=document.getElementById(`owner-${t.id}`); mk.style.borderColor=p.color; mk.style.backgroundColor=p.color+'33';
+            updateStats(); document.getElementById('msg-box').innerText="購買成功！"; setTimeout(nextTurn, 1000);
+        }
+        
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function nextTurn() { turn=(turn+1)%players.length; updateTurn(); }
+
+        // 更新：核心結算邏輯 (現金決勝)
+        function endGame(reason) {
+            clearInterval(timer); sounds.win.play(); confetti({particleCount:100,spread:70,origin:{y:0.6}});
+            
+            // 1. 直接排序找出贏家 (現金最高者)
+            const ranked = [...players].sort((a,b) => b.m - a.m);
+            const winner = ranked[0];
+            const isDraw = ranked[0].m === ranked[1].m;
+
+            // 2. 設定結算標題與原因
+            let reasonTxt = "";
+            if(reason === 'time') {
+                reasonTxt = "時間到！依手上現金結算";
+            } else {
+                const bankruptPlayer = players.find(p => p.m < 0);
+                reasonTxt = `${bankruptPlayer ? bankruptPlayer.n : '有人'} 破產！依現金結算`;
+            }
+
+            document.getElementById('winner-avatar').innerText = isDraw ? '🤝' : winner.av;
+            document.getElementById('winner-text').innerText = isDraw ? '平手！' : `${winner.n} 獲勝!`;
+            document.getElementById('win-reason').innerText = reasonTxt;
+
+            // 3. 生成詳細結算清單 HTML (只顯示現金)
+            let detailsHtml = '<div class="w-full text-sm bg-gray-50 p-3 rounded-xl mb-4 text-left">';
+            ranked.forEach(p => {
+                 const isWinner = p.id === winner.id && !isDraw;
+                 const isBankrupt = p.m < 0;
+                 let textColor = 'text-gray-700';
+                 if (isWinner) textColor = 'font-bold text-blue-600';
+                 if (isBankrupt) textColor = 'font-bold text-red-600';
+
+                 detailsHtml += `
+                 <div class="flex justify-between items-center border-b border-gray-200 py-3 ${textColor}">
+                    <div class="flex items-center gap-1 text-lg">${p.av} ${p.n}</div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold">$${p.m}</div>
+                        ${isBankrupt ? '<div class="text-xs">(已破產)</div>' : ''}
+                    </div>
+                 </div>`;
+            });
+            detailsHtml += '</div>';
+            document.getElementById('win-detail-container').innerHTML = detailsHtml;
+            
+            document.getElementById('game-over-modal').classList.add('active');
+        }
+    </script>
+</body>
+</html>

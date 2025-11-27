@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gemini 台灣生詞大富翁 (V7現金為王)</title>
+    <title>Gemini 台灣生詞大富翁 (V7鼓勵答題版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -118,7 +118,7 @@
         <div class="board-grid" id="board">
             <div class="center-area">
                 <div class="gemini-logo text-4xl mb-1">Gemini</div>
-                <div class="text-gray-500 text-xs mb-3 font-bold">台灣生詞大富翁 (現金為王)</div>
+                <div class="text-gray-500 text-xs mb-3 font-bold">台灣生詞大富翁 (現金決胜)</div>
                 <div class="text-5xl mb-2 transition-transform" id="dice-display">🎲</div>
                 <button id="roll-btn" onclick="rollDice()" class="px-6 py-2 bg-[#4285F4] text-white rounded-full text-lg font-bold shadow-md hover:bg-[#3367d6] transition disabled:opacity-50">擲骰子</button>
                 <div id="msg-box" class="mt-2 text-center text-xs font-medium text-gray-600 h-6"></div>
@@ -131,13 +131,15 @@
     <div id="scholarship-modal" class="modal"><div class="modal-content">
         <div class="text-5xl mb-2">🎓</div>
         <div class="text-3xl font-bold text-blue-600 mb-2">獎學金</div>
-        <p class="text-gray-600 mb-4 text-sm">雖然錢不夠買地，<br>但答對題目值得鼓勵！</p>
+        <p id="scholarship-text" class="text-gray-600 mb-4 text-sm">雖然錢不夠買地，<br>但答對題目值得鼓勵！</p>
         <div class="text-4xl font-black text-green-600 mb-6">+$50</div>
         <button onclick="closeModal('scholarship-modal'); nextTurn();" class="bg-blue-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg hover:bg-blue-600">收下鼓勵</button>
     </div></div>
 
     <div id="snack-modal" class="modal"><div class="modal-content"><div class="text-5xl mb-2" id="snack-icon"></div><h2 class="text-2xl font-bold mb-1" id="snack-name"></h2><p class="text-gray-600 mb-4">花費 <span class="text-red-500 font-bold">$70</span>！<br>請選擇技能：</p><div class="grid grid-cols-2 gap-3"><button onclick="useSnackAbility('steal')" class="bg-red-500 text-white p-3 rounded-xl font-bold hover:bg-red-600 flex flex-col items-center"><span class="text-2xl mb-1">😈</span>美味搶奪<span class="text-xs font-normal">搶錢</span></button><button onclick="useSnackAbility('move')" class="bg-green-500 text-white p-3 rounded-xl font-bold hover:bg-green-600 flex flex-col items-center"><span class="text-2xl mb-1">💨</span>吃飽快跑<span class="text-xs font-normal">再移動</span></button></div></div></div>
-    <div id="buy-modal" class="modal"><div class="modal-content"><div class="text-4xl mb-2">🎉 答對了！</div><h3 class="text-gray-500 text-sm">獲得購買權</h3><h2 id="buy-name" class="text-3xl font-bold mb-1 mt-2"></h2><div class="bg-blue-50 p-3 rounded-lg mb-4 mt-2 inline-block border-2 border-blue-200"><span class="text-sm text-gray-600">價格:</span><span id="land-price" class="text-2xl font-bold text-blue-700 ml-2"></span></div><div class="flex gap-3 justify-center"><button id="buy-confirm-btn" class="bg-blue-600 text-white py-2 px-8 rounded-lg font-bold shadow-md">購買</button><button onclick="closeModal('buy-modal'); nextTurn();" class="bg-gray-300 text-gray-700 py-2 px-6 rounded-lg font-bold">放棄</button></div></div></div>
+    
+    <div id="buy-modal" class="modal"><div class="modal-content"><div class="text-4xl mb-2">🎉 答對了！</div><h3 class="text-gray-500 text-sm">獲得購買權</h3><h2 id="buy-name" class="text-3xl font-bold mb-1 mt-2"></h2><div class="bg-blue-50 p-3 rounded-lg mb-4 mt-2 inline-block border-2 border-blue-200"><span class="text-sm text-gray-600">價格:</span><span id="land-price" class="text-2xl font-bold text-blue-700 ml-2"></span></div><div class="flex gap-3 justify-center"><button id="buy-confirm-btn" class="bg-blue-600 text-white py-2 px-8 rounded-lg font-bold shadow-md">購買</button><button onclick="passLandReward('choice')" class="bg-gray-300 text-gray-700 py-2 px-6 rounded-lg font-bold">放棄領獎勵</button></div></div></div>
+    
     <div id="earn-modal" class="modal"><div class="modal-content"><div class="text-5xl mb-2">💰</div><div class="text-3xl font-bold text-yellow-600 mb-2">恭喜發財！</div><p class="text-gray-600 mb-4 text-lg">答對問題，獲得獎金</p><div class="text-4xl font-black text-green-600 mb-6">+$150</div><button onclick="closeModal('earn-modal'); nextTurn();" class="bg-yellow-500 text-white py-3 px-10 rounded-full font-bold shadow-lg text-lg hover:bg-yellow-600">收下獎勵</button></div></div>
     
     <div id="game-over-modal" class="modal">
@@ -152,7 +154,7 @@
     </div>
 
     <script>
-        const rawMapData = [{t:'city',n:'基隆',icon:'🏞️',price:260},{t:'snack',n:'珍珠奶茶',icon:'🧋'},{t:'city',n:'台北',icon:'🏞️',price:300},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'新北',icon:'🏞️',price:280},{t:'snack',n:'蛋餅',icon:'🍳'},{t:'city',n:'桃園',icon:'🏞️',price:240},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'新竹',icon:'🏞️',price:250},{t:'snack',n:'蚵仔煎',icon:'🦪'},{t:'city',n:'台中',icon:'🏞️',price:270},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'南投',icon:'🏞️',price:190},{t:'snack',n:'擔仔麵',icon:'🍜'},{t:'city',n:'台南',icon:'🏞️',price:260},{t:'city',n:'嘉義',icon:'🏞️',price:200},{t:'snack',n:'臭豆腐',icon:'🟨'},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'高雄',icon:'🏞️',price:280},{t:'snack',n:'牛肉麵',icon:'🥩'},{t:'city',n:'屏東',icon:'🏞️',price:220},{t:'city',n:'台東',icon:'🏞️',price:190},{t:'snack',n:'烏龍茶',icon:'🍵'},{t:'city',n:'花蓮',icon:'🏞️',price:210},{t:'money',n:'勤學獎金',icon:'💰'},{t:'city',n:'宜蘭',icon:'🏞️',price:230},{t:'city',n:'澎湖',icon:'🏞️',price:170},{t:'city',n:'金馬',icon:'🏞️',price:150}];
+        const rawMapData = [{t:'city',n:'基隆',icon:'🏞️',price:260},{t:'snack',n:'珍珠奶茶',icon:'🧋'},{t:'city',n:'台北',icon:'🏞️',price:300},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'新北',icon:'🏞️',price:280},{t:'snack',n:'蛋餅',icon:'🍳'},{t:'city',n:'桃園',icon:'🏞️',price:240},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'新竹',icon:'🏞️',price:250},{t:'snack',n:'蚵仔煎',icon:'🦪'},{t:'city',n:'台中',icon:'🏞️',price:270},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'南投',icon:'🏞️',price:190},{t:'snack',n:'擔仔麵',icon:'🍜'},{t:'city',n:'台南',icon:'🏞️',price:260},{t:'city',n:'嘉義',icon:'🏞️',price:200},{t:'snack',n:'臭豆腐',icon:'🟨'},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'高雄',icon:'🏞️',price:280},{t:'snack',n:'牛肉麵',icon:'🥩'},{t:'city',n:'屏東',icon:'🏞️',price:220},{t:'city',n:'台東',icon:'🏞️',price:190},{t:'snack',n:'烏龍茶',icon:'🍵'},{t:'city',n:'花蓮',icon:'🏞️',price:210},{t:'money',n:'獎學金',icon:'💰'},{t:'city',n:'宜蘭',icon:'🏞️',price:230},{t:'city',n:'澎湖',icon:'🏞️',price:170},{t:'city',n:'金馬',icon:'🏞️',price:150}];
         const borderColors = ['border-g-red', 'border-g-blue', 'border-g-yellow', 'border-g-green'];
         const sounds = { dice: new Audio('https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3'), buy: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'), pay: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'), win: new Audio('https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3'), eat: new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3') };
         Object.values(sounds).forEach(s => s.volume = 0.4);
@@ -183,7 +185,6 @@
             const pCount = document.getElementById('player-count').value;
             timeLeft = (parseInt(document.getElementById('game-duration').value)||10)*60;
             
-            // 更新：初始金額改為 2000
             players = [
                 {id:0, n:document.getElementById('p1-name').value, av:document.getElementById('p1-avatar').value, m:2000, pos:0, color:'#EA4335', css:'p1', text:'text-red-600'},
                 {id:1, n:document.getElementById('p2-name').value, av:document.getElementById('p2-avatar').value, m:2000, pos:0, color:'#4285F4', css:'p2', text:'text-blue-600'}
@@ -285,16 +286,36 @@
                 } else if(pendingTile.t === 'snack') { 
                     p.m -= 70; updateStats(); sounds.eat.play(); setTimeout(() => showSnackModal(pendingTile), 800); 
                 } else {
+                    // 核心修改：錢不夠，或者選擇放棄，都給獎勵
                     if(p.m < pendingTile.price) {
-                        p.m += 50; updateStats(); sounds.buy.play();
-                        document.getElementById('scholarship-modal').classList.add('active');
+                        passLandReward('poor'); // 錢不夠的獎勵
                     } else {
-                        showBuyModal(pendingTile);
+                        showBuyModal(pendingTile); // 錢夠，跳出購買視窗
                     }
                 }
             } else {
                 document.getElementById('msg-box').innerText = "答錯了..."; setTimeout(nextTurn, 1500);
             }
+        }
+
+        // 新增功能：處理放棄購買或錢不夠時的獎勵
+        function passLandReward(reason) {
+            closeModal('buy-modal'); // 如果是從購買視窗過來的，先關閉它
+            const p = players[turn];
+            p.m += 50; // 發放獎勵
+            updateStats();
+            sounds.buy.play();
+
+            // 更新 Modal 文字提示
+            const modalTxt = document.querySelector('#scholarship-modal p');
+            if (reason === 'poor') {
+                modalTxt.innerHTML = "雖然錢不夠買地，<br>但答對題目值得鼓勵！";
+            } else {
+                modalTxt.innerHTML = "選擇保留現金，<br>答對題目獲得獎勵！";
+            }
+
+            document.getElementById('scholarship-modal').classList.add('active');
+            // 注意：scholarship-modal 的按鈕會呼叫 nextTurn()
         }
 
         function showSnackModal(t) {
@@ -320,7 +341,7 @@
         function showBuyModal(t) {
             const p=players[turn], btn=document.getElementById('buy-confirm-btn');
             document.getElementById('buy-name').innerText=t.n; document.getElementById('land-price').innerText=`$${t.price}`; 
-            btn.onclick=()=>buyLand(t); btn.disabled=false; btn.innerText="購買"; btn.classList.remove('bg-gray-400');
+            btn.onclick=()=>buyLand(t); btn.disabled=false; btn.innerText="購買";
             document.getElementById('buy-modal').classList.add('active');
         }
         function buyLand(t) {
@@ -332,16 +353,14 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         function nextTurn() { turn=(turn+1)%players.length; updateTurn(); }
 
-        // 更新：核心結算邏輯 (現金決勝)
+        // 核心結算邏輯 (現金決勝)
         function endGame(reason) {
             clearInterval(timer); sounds.win.play(); confetti({particleCount:100,spread:70,origin:{y:0.6}});
             
-            // 1. 直接排序找出贏家 (現金最高者)
             const ranked = [...players].sort((a,b) => b.m - a.m);
             const winner = ranked[0];
             const isDraw = ranked[0].m === ranked[1].m;
 
-            // 2. 設定結算標題與原因
             let reasonTxt = "";
             if(reason === 'time') {
                 reasonTxt = "時間到！依手上現金結算";
@@ -354,7 +373,6 @@
             document.getElementById('winner-text').innerText = isDraw ? '平手！' : `${winner.n} 獲勝!`;
             document.getElementById('win-reason').innerText = reasonTxt;
 
-            // 3. 生成詳細結算清單 HTML (只顯示現金)
             let detailsHtml = '<div class="w-full text-sm bg-gray-50 p-3 rounded-xl mb-4 text-left">';
             ranked.forEach(p => {
                  const isWinner = p.id === winner.id && !isDraw;
@@ -378,5 +396,5 @@
             document.getElementById('game-over-modal').classList.add('active');
         }
     </script>
-    </body>
+</body>
 </html>
